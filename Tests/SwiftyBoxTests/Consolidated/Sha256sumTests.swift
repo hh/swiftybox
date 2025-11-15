@@ -168,7 +168,11 @@ final class Sha256sumTests: XCTestCase {
 
         XCTAssertEqual(result.exitCode, 0, "sha256sum should succeed on stdin")
 
-        let parts = result.stdout.split(separator: " ", maxSplits: 2, omittingEmptySubsequences: true)
+        // Split on newlines first, then parse the first line
+        let lines = result.stdout.split(separator: "\n")
+        XCTAssertGreaterThan(lines.count, 0, "Should have output")
+
+        let parts = lines[0].split(separator: " ", maxSplits: 2, omittingEmptySubsequences: true)
         XCTAssertEqual(parts.count, 2, "Should have hash and filename")
         XCTAssertEqual(parts[0].count, 64, "Hash should be 64 hex characters")
         XCTAssertEqual(parts[1], "-", "Filename should be '-' for stdin")
@@ -181,7 +185,11 @@ final class Sha256sumTests: XCTestCase {
 
         XCTAssertEqual(result.exitCode, 0, "sha256sum should read stdin by default")
 
-        let parts = result.stdout.split(separator: " ", maxSplits: 2, omittingEmptySubsequences: true)
+        // Split on newlines first, then parse the first line
+        let lines = result.stdout.split(separator: "\n")
+        XCTAssertGreaterThan(lines.count, 0, "Should have output")
+
+        let parts = lines[0].split(separator: " ", maxSplits: 2, omittingEmptySubsequences: true)
         XCTAssertEqual(parts[1], "-", "Should show '-' for stdin")
     }
 

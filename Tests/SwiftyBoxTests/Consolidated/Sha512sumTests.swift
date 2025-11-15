@@ -102,7 +102,11 @@ final class Sha512sumTests: XCTestCase {
 
         XCTAssertEqual(result.exitCode, 0)
 
-        let parts = result.stdout.split(separator: " ", maxSplits: 2, omittingEmptySubsequences: true)
+        // Split on newlines first, then parse the first line
+        let lines = result.stdout.split(separator: "\n")
+        XCTAssertGreaterThan(lines.count, 0, "Should have output")
+
+        let parts = lines[0].split(separator: " ", maxSplits: 2, omittingEmptySubsequences: true)
         XCTAssertEqual(parts[1], "-", "Should show '-' for stdin")
     }
 

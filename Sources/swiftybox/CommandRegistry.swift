@@ -63,6 +63,7 @@ struct CommandRegistry {
             "whoami": WhoamiCommand.main,
             "logname": LognameCommand.main,
             "hostid": HostidCommand.main,
+            "hostname": HostnameCommand.main,
             "tty": TtyCommand.main,
 
             // Batch 2: Path Operations (NOFORK)
