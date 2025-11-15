@@ -1,37 +1,34 @@
 // SumTests.swift
-// Auto-generated from BusyBox sum.tests
-// DO NOT EDIT - regenerate with import-busybox-tests.py
+// Tests for the `sum` command - checksum and count blocks
 
 import XCTest
+@testable import swiftybox
+
+/// Tests for the `sum` command
+///
+/// IMPLEMENTATION STATUS: NOT IMPLEMENTED
+/// The `sum` command is not yet implemented in SwiftyλBox.
+/// Note: Similar functionality exists in `cksum` command.
+///
+/// Expected behavior:
+/// - Print checksum and block count
+/// - Reference: POSIX sum command (deprecated)
+/// - Modern alternative: cksum, md5sum, sha256sum
+/// - https://pubs.opengroup.org/onlinepubs/9699919799/utilities/sum.html
 
 final class SumTests: XCTestCase {
-    var runner: TestRunner!
-    var swiftyboxPath: String {
-        let cwd = FileManager.default.currentDirectoryPath
-        return "\(cwd)/.build/debug/swiftybox"
+
+    func testSumNotImplemented() {
+        // sum command is not implemented yet
+        // Consider using cksum instead
+        XCTExpectFailure("sum command not yet implemented - use cksum instead")
+
+        // When/if implemented, sum should:
+        // - Calculate BSD or System V checksum
+        // - Print block count
+        // - Support multiple files
     }
 
-    override func setUp() {
-        super.setUp()
-        runner = TestRunner(verbose: ProcessInfo.processInfo.environment["VERBOSE"] != nil,
-                           swiftyboxPath: swiftyboxPath)
-    }
-
-    override func tearDown() {
-        runner.printSummary()
-        XCTAssertEqual(runner.failureCount, 0, "\(runner.failureCount) tests failed")
-        super.tearDown()
-    }
-
-    func testTestName_1() {
-        runner.testing(
-            "test name",
-            command: "options",
-            expectedOutput: "expected result",
-            inputFile: "file input",
-            stdin: "stdin"
-        )
-    }
-
+    // TODO: Consider whether sum should be implemented or deprecated
+    // Modern alternatives exist: cksum, md5sum, sha256sum, sha512sum
 }
-
