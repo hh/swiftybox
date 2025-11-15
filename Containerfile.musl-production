@@ -13,9 +13,8 @@
 # Stage 1: Build Swift Application
 # ==============================================================================
 # Use local base image for development, or GHCR for CI/CD
-# Uncomment the appropriate line:
-FROM swiftybox-base:musl-v3 AS builder
-# FROM ghcr.io/hh/swiftybox-base:musl AS builder
+ARG BASE_IMAGE=ghcr.io/hh/swiftybox-base:musl
+FROM ${BASE_IMAGE} AS builder
 
 WORKDIR /workspace
 
