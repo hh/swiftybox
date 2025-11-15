@@ -74,8 +74,8 @@ jobs:
           # Create a temporary container from the built image
           CONTAINER_ID=$(docker create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }})
 
-          # Extract the swiftybox binary
-          docker cp $CONTAINER_ID:/bin/swiftybox ./swiftybox
+          # Extract the swiftybox binary (use .real, not symlink)
+          docker cp $CONTAINER_ID:/bin/swiftybox.real ./swiftybox
           docker cp $CONTAINER_ID:/usr/lib/libbusybox.so.1.36.1 ./libbusybox.so.1.36.1
 
           # Clean up
