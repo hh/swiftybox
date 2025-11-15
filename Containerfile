@@ -129,7 +129,9 @@ RUN --mount=type=cache,target=/workspace/.build \
         -Xlinker -rpath -Xlinker /usr/lib && \
     echo "✅ SwiftyλBox built successfully" && \
     ls -lh .build/release/swiftybox && \
-    ldd .build/release/swiftybox | grep libbusybox
+    ldd .build/release/swiftybox | grep libbusybox && \
+    # Copy binary out of cache mount before it's unmounted
+    cp .build/release/swiftybox /workspace/swiftybox
 
 # ============================================
 # Stage: Install Symlinks
@@ -137,7 +139,7 @@ RUN --mount=type=cache,target=/workspace/.build \
 FROM docker.io/library/swift:latest AS installer
 
 # Copy binary and library from builder
-COPY --from=swift-builder /workspace/.build/release/swiftybox /tmp/swiftybox
+COPY --from=swift-builder /workspace/swiftybox /tmp/swiftybox
 COPY --from=swift-builder /usr/lib/libbusybox.so.1.36.1 /tmp/
 
 # Create directory for our complete system
