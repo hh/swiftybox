@@ -9,10 +9,7 @@ struct ShellMode {
 
     /// Run BusyBox ASH shell with Swift commands as built-ins
     static func runASH(args: [String]) -> Int32 {
-        // Initialize BusyBox library
-        lbb_prepare("ash", nil)
-
-        // Convert Swift args to C argv
+        // Convert Swift args to C argv FIRST
         var cArgs = args.map { strdup($0) }
         cArgs.append(nil)
 
@@ -21,6 +18,9 @@ struct ShellMode {
         for (i, arg) in cArgs.enumerated() {
             argv[i] = arg
         }
+
+        // Initialize BusyBox library with argv (required!)
+        lbb_prepare("ash", argv)
 
         // Call BusyBox ash_main
         // This will use our Swift commands as built-ins via the ASH patch!
