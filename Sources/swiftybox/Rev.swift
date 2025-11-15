@@ -10,9 +10,8 @@ struct RevCommand {
         for file in files {
             let content: String
             if file == "-" {
-                var input = ""
-                while let line = readLine() { input += line + "\n" }
-                content = input
+                let data = (try? FileHandle.standardInput.readToEnd()) ?? Data()
+                content = String(data: data, encoding: .utf8) ?? ""
             } else {
                 guard let data = try? String(contentsOfFile: file, encoding: .utf8) else {
                     FileHandle.standardError.write("rev: \(file): No such file or directory\n".data(using: .utf8)!)
@@ -21,7 +20,14 @@ struct RevCommand {
                 content = data
             }
 
-            for line in content.split(separator: "\n", omittingEmptySubsequences: false) {
+            // Process line by line
+            var lines = content.components(separatedBy: "\n")
+            // Remove trailing empty string if content ends with newline
+            if content.hasSuffix("\n") && lines.last?.isEmpty == true {
+                lines.removeLast()
+            }
+
+            for line in lines {
                 print(String(line.reversed()))
             }
         }

@@ -93,14 +93,32 @@ struct HeadCommand {
             }
         }
 
-        // Split into lines and take first N
-        let lines = content.components(separatedBy: "\n")
-        let outputLines = lines.prefix(lineCount)
+        // Split into lines and take first N or skip last N
+        var lines = content.components(separatedBy: "\n")
+
+        // components(separatedBy:) creates an empty last element if content ends with \n
+        // Remove it to get accurate line count
+        let hasTrailingNewline = content.hasSuffix("\n") && !content.isEmpty
+        if hasTrailingNewline && lines.last?.isEmpty == true {
+            lines.removeLast()
+        }
+
+        let outputLines: ArraySlice<String>
+
+        if lineCount >= 0 {
+            // Positive: take first N lines
+            outputLines = lines.prefix(lineCount)
+        } else {
+            // Negative: skip last N lines (take all but last N)
+            let skipCount = min(abs(lineCount), lines.count)
+            let takeCount = max(0, lines.count - skipCount)
+            outputLines = lines.prefix(takeCount)
+        }
 
         // Print lines
         for (index, line) in outputLines.enumerated() {
             // Don't add newline after last line if original didn't have trailing newline
-            if index == outputLines.count - 1 && !content.hasSuffix("\n") {
+            if index == outputLines.count - 1 && !hasTrailingNewline {
                 print(line, terminator: "")
             } else {
                 print(line)

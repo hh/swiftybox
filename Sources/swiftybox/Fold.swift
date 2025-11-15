@@ -31,9 +31,8 @@ struct FoldCommand {
         for file in files {
             let content: String
             if file == "-" {
-                var result = ""
-                while let line = readLine() { result += line + "\n" }
-                content = result
+                let data = (try? FileHandle.standardInput.readToEnd()) ?? Data()
+                content = String(data: data, encoding: .utf8) ?? ""
             } else {
                 guard let data = try? String(contentsOfFile: file, encoding: .utf8) else {
                     FileHandle.standardError.write("fold: \(file): No such file or directory\n".data(using: .utf8)!)
@@ -42,7 +41,14 @@ struct FoldCommand {
                 content = data
             }
 
-            for line in content.split(separator: "\n", omittingEmptySubsequences: false) {
+            // Process line by line
+            var lines = content.components(separatedBy: "\n")
+            // Remove trailing empty string if content ends with newline
+            if content.hasSuffix("\n") && lines.last?.isEmpty == true {
+                lines.removeLast()
+            }
+
+            for line in lines {
                 var current = String(line)
                 while current.count > width {
                     var breakPoint = width
