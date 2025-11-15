@@ -1,0 +1,263 @@
+name: Build and Publish SwiftyλBox
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-container:
+    name: Build Container Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # Tag with branch name for branches
+            type=ref,event=branch
+            # Tag with PR number for pull requests
+            type=ref,event=pr
+            # Tag with semver for tags
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            # Tag with 'latest' for main branch
+            type=raw,value=latest,enable={{is_default_branch}}
+            # Tag with commit SHA
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push container image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=false
+
+      - name: Extract binary from container (for artifacts)
+        if: github.event_name != 'pull_request'
+        run: |
+          # Create a temporary container from the built image
+          CONTAINER_ID=$(docker create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }})
+
+          # Extract the swiftybox binary
+          docker cp $CONTAINER_ID:/bin/swiftybox ./swiftybox
+          docker cp $CONTAINER_ID:/usr/lib/libbusybox.so.1.36.1 ./libbusybox.so.1.36.1
+
+          # Clean up
+          docker rm $CONTAINER_ID
+
+          # Create checksums
+          sha256sum swiftybox > swiftybox.sha256
+          sha256sum libbusybox.so.1.36.1 > libbusybox.sha256
+
+          # Make executable
+          chmod +x swiftybox
+
+          # Get version info
+          ./swiftybox --version || echo "SwiftyλBox built from ${{ github.sha }}" > version.txt
+
+      - name: Upload binary artifacts
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: swiftybox-${{ steps.meta.outputs.version }}-linux-amd64
+          path: |
+            swiftybox
+            swiftybox.sha256
+            libbusybox.so.1.36.1
+            libbusybox.sha256
+            version.txt
+          retention-days: 90
+
+  test-container:
+    name: Test Container Image
+    runs-on: ubuntu-latest
+    needs: build-container
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix={{branch}}-
+
+      - name: Pull and test container
+        run: |
+          # Pull the image
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+
+          echo "Testing basic commands..."
+
+          # Test echo
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }} /bin/echo "Hello from SwiftyλBox"
+
+          # Test pwd
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }} /bin/pwd
+
+          # Test shell script
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }} /bin/sh -c 'echo "Testing shell script"; pwd; true && echo "Success"'
+
+          # Performance test (should be <1s with Swift NOFORK)
+          echo "Running performance test (1000 iterations)..."
+          time docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }} /bin/sh -c 'for i in $(seq 1 1000); do echo "test" > /dev/null; done'
+
+          echo "✅ All tests passed!"
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-container, test-container]
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: swiftybox-*
+          merge-multiple: true
+          path: ./artifacts
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+
+      - name: Create release notes
+        run: |
+          cat > release-notes.md << 'EOF'
+          # SwiftyλBox Release ${{ steps.meta.outputs.version }}
+
+          A proof-of-concept demonstrating Swift's zero-overhead C interoperability on Linux by creating a shell where Unix commands run as Swift functions instead of spawning processes.
+
+          ## What's New
+
+          - **74 commands implemented** in Swift with NOFORK performance
+          - **ASH shell integration** - shell scripts benefit from Swift implementations
+          - **~786x faster** for NOFORK commands in loops
+          - Single binary with BusyBox fallback
+
+          ## Installation
+
+          ### Using Container Image
+
+          ```bash
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          docker run -it ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }} /bin/sh
+          ```
+
+          Or with podman:
+
+          ```bash
+          podman pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          podman run -it ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }} /bin/sh
+          ```
+
+          ### Using Binary Artifact
+
+          Download the binary from the assets below:
+
+          1. Download `swiftybox` and `libbusybox.so.1.36.1`
+          2. Verify checksums (`.sha256` files)
+          3. Make executable: `chmod +x swiftybox`
+          4. Run: `./swiftybox echo "Hello from Swift!"`
+
+          ## Performance Test
+
+          ```bash
+          # Should complete in <1 second (vs 10-30s with fork+exec)
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }} \
+            /bin/sh -c 'time for i in $(seq 1 1000); do echo "test" > /dev/null; done'
+          ```
+
+          ## Implemented Commands
+
+          All 74 commands work in both direct invocation and ASH shell scripts:
+
+          - **NOFORK (44):** echo, pwd, true, false, test, cat, head, tail, grep, ls, wc, and more
+          - **NOEXEC (30):** cp, mv, rm, sort, uniq, md5sum, sha256sum, date, id, and more
+
+          See [PROGRESS.md](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/PROGRESS.md) for complete list.
+
+          ## Documentation
+
+          - [README.md](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/README.md) - Quick start
+          - [ASH_INTEGRATION_V2.md](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/ASH_INTEGRATION_V2.md) - ASH shell integration
+          - [BUILD_GUIDE.md](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/BUILD_GUIDE.md) - Build from source
+
+          ---
+
+          **Built with:** Swift on Linux + BusyBox integration
+          **Platform:** linux/amd64
+          **Container Registry:** ghcr.io/${{ github.repository }}
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: release-notes.md
+          files: |
+            artifacts/swiftybox
+            artifacts/swiftybox.sha256
+            artifacts/libbusybox.so.1.36.1
+            artifacts/libbusybox.sha256
+            artifacts/version.txt
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
