@@ -67,12 +67,43 @@ struct TrCommand {
         return 0
     }
 
+    /// Get characters for a character class like [:alpha:], [:digit:], etc.
+    private static func characterClass(_ className: String) -> Set<Character> {
+        switch className {
+        case "alpha": return Set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        case "upper": return Set("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        case "lower": return Set("abcdefghijklmnopqrstuvwxyz")
+        case "digit": return Set("0123456789")
+        case "alnum": return Set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+        case "space": return Set(" \t\n\r\u{0B}\u{0C}")  // space, tab, newline, CR, VT, FF
+        case "blank": return Set(" \t")  // space and tab only
+        case "punct": return Set("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~")
+        case "print": return Set((32...126).map { Character(UnicodeScalar($0)) })
+        case "cntrl": return Set((0...31).map { Character(UnicodeScalar($0)) } + [Character(UnicodeScalar(127))])
+        case "xdigit": return Set("0123456789abcdefABCDEF")
+        default: return Set()
+        }
+    }
+
     private static func expandSet(_ set: String) -> Set<Character> {
         var expanded = Set<Character>()
 
         var i = set.startIndex
         while i < set.endIndex {
             let char = set[i]
+
+            // Check for character class [:classname:]
+            if char == "[" && set.index(after: i) < set.endIndex && set[set.index(after: i)] == ":" {
+                // Find the closing :]
+                // Look for the pattern ":]" after "[:"
+                let searchStart = set.index(i, offsetBy: 2)
+                if let closeIdx = set[searchStart...].range(of: ":]")?.lowerBound {
+                    let className = String(set[searchStart..<closeIdx])
+                    expanded.formUnion(characterClass(className))
+                    i = set.index(after: set.index(after: closeIdx))
+                    continue
+                }
+            }
 
             // Check for range pattern (a-z)
             let nextIdx = set.index(after: i)
@@ -119,6 +150,20 @@ struct TrCommand {
         var i = set.startIndex
         while i < set.endIndex {
             let char = set[i]
+
+            // Check for character class [:classname:]
+            if char == "[" && set.index(after: i) < set.endIndex && set[set.index(after: i)] == ":" {
+                // Find the closing :]
+                // Look for the pattern ":]" after "[:"
+                let searchStart = set.index(i, offsetBy: 2)
+                if let closeIdx = set[searchStart...].range(of: ":]")?.lowerBound {
+                    let className = String(set[searchStart..<closeIdx])
+                    // Add character class in sorted order for consistency
+                    expanded.append(contentsOf: characterClass(className).sorted())
+                    i = set.index(after: set.index(after: closeIdx))
+                    continue
+                }
+            }
 
             // Check for range pattern (a-z)
             let nextIdx = set.index(after: i)

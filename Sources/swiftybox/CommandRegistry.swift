@@ -122,6 +122,7 @@ struct CommandRegistry {
             "tac": TacCommand.main,
             "rev": RevCommand.main,
             "expand": ExpandCommand.main,
+            "unexpand": UnexpandCommand.main,
             "hexdump": HexdumpCommand.main,
             "shuf": ShufCommand.main,
             "stat": StatCommand.main,
