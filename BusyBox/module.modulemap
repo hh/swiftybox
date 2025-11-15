@@ -1,5 +1,5 @@
 module BusyBox {
-    header "include/busybox-bridge.h"
+    header "include/busybox.h"
     link "busybox"
     export *
 }

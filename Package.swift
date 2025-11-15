@@ -17,21 +17,11 @@ let package = Package(
             name: "BusyBox",
             path: "BusyBox"
         ),
-
         .executableTarget(
             name: "swiftybox",
             dependencies: [
                 "BusyBox",
                 .product(name: "Crypto", package: "swift-crypto"),
-            ],
-            swiftSettings: [
-                .unsafeFlags(["-I", "../busybox/include"])
-            ],
-            linkerSettings: [
-                .unsafeFlags([
-                    "-L../busybox",
-                    "-lbusybox"
-                ])
             ]
         ),
 

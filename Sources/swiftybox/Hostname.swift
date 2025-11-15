@@ -1,5 +1,7 @@
 import Foundation
-#if canImport(Glibc)
+#if canImport(Musl)
+import Musl
+#elseif canImport(Glibc)
 import Glibc
 #elseif canImport(Darwin)
 import Darwin
@@ -80,7 +82,11 @@ struct HostnameCommand {
     static func getHostname() -> String? {
         var buffer = [CChar](repeating: 0, count: 256)
 
-        #if canImport(Glibc)
+        #if canImport(Musl)
+        guard Musl.gethostname(&buffer, buffer.count) == 0 else {
+            return nil
+        }
+        #elseif canImport(Glibc)
         guard Glibc.gethostname(&buffer, buffer.count) == 0 else {
             return nil
         }
@@ -102,7 +108,14 @@ struct HostnameCommand {
     }
 
     static func setHostname(_ newName: String) -> Int32 {
-        #if canImport(Glibc)
+        #if canImport(Musl)
+        let result = Musl.sethostname(newName, newName.utf8.count)
+        if result != 0 {
+            FileHandle.standardError.write("hostname: you must be root to change the hostname\n".data(using: .utf8)!)
+            return 1
+        }
+        return 0
+        #elseif canImport(Glibc)
         let result = Glibc.sethostname(newName, newName.utf8.count)
         if result != 0 {
             FileHandle.standardError.write("hostname: you must be root to change the hostname\n".data(using: .utf8)!)
@@ -156,11 +169,13 @@ struct HostnameCommand {
         // Try to resolve hostname to IP
         var hints = addrinfo()
         hints.ai_family = AF_UNSPEC
-        hints.ai_socktype = Int32(SOCK_STREAM.rawValue)
+        hints.ai_socktype = SOCK_STREAM
 
         var result: UnsafeMutablePointer<addrinfo>?
 
-        #if canImport(Glibc)
+        #if canImport(Musl)
+        let status = Musl.getaddrinfo(hostname, nil, &hints, &result)
+        #elseif canImport(Glibc)
         let status = Glibc.getaddrinfo(hostname, nil, &hints, &result)
         #elseif canImport(Darwin)
         let status = Darwin.getaddrinfo(hostname, nil, &hints, &result)
@@ -175,7 +190,9 @@ struct HostnameCommand {
         }
 
         defer {
-            #if canImport(Glibc)
+            #if canImport(Musl)
+            Musl.freeaddrinfo(addrList)
+            #elseif canImport(Glibc)
             Glibc.freeaddrinfo(addrList)
             #elseif canImport(Darwin)
             Darwin.freeaddrinfo(addrList)
@@ -193,7 +210,12 @@ struct HostnameCommand {
                 let sockaddr = addr.ai_addr.withMemoryRebound(to: sockaddr_in.self, capacity: 1) { $0.pointee }
                 var buffer = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
 
-                #if canImport(Glibc)
+                #if canImport(Musl)
+                var inAddr = sockaddr.sin_addr
+                if let ipStr = Musl.inet_ntop(AF_INET, &inAddr, &buffer, socklen_t(INET_ADDRSTRLEN)) {
+                    ipAddresses.append(String(cString: ipStr))
+                }
+                #elseif canImport(Glibc)
                 var inAddr = sockaddr.sin_addr
                 if let ipStr = Glibc.inet_ntop(AF_INET, &inAddr, &buffer, socklen_t(INET_ADDRSTRLEN)) {
                     ipAddresses.append(String(cString: ipStr))
@@ -209,7 +231,12 @@ struct HostnameCommand {
                 let sockaddr = addr.ai_addr.withMemoryRebound(to: sockaddr_in6.self, capacity: 1) { $0.pointee }
                 var buffer = [CChar](repeating: 0, count: Int(INET6_ADDRSTRLEN))
 
-                #if canImport(Glibc)
+                #if canImport(Musl)
+                var inAddr = sockaddr.sin6_addr
+                if let ipStr = Musl.inet_ntop(AF_INET6, &inAddr, &buffer, socklen_t(INET6_ADDRSTRLEN)) {
+                    ipAddresses.append(String(cString: ipStr))
+                }
+                #elseif canImport(Glibc)
                 var inAddr = sockaddr.sin6_addr
                 if let ipStr = Glibc.inet_ntop(AF_INET6, &inAddr, &buffer, socklen_t(INET6_ADDRSTRLEN)) {
                     ipAddresses.append(String(cString: ipStr))

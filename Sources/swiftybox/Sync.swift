@@ -1,5 +1,7 @@
 import Foundation
-#if os(Linux)
+#if canImport(Musl)
+import Musl
+#elseif canImport(Glibc)
 import Glibc
 #else
 import Darwin
@@ -11,9 +13,11 @@ import Darwin
 struct SyncCommand {
     static func main(_ args: [String]) -> Int32 {
         // Call POSIX sync() to flush all filesystem buffers to disk
-        #if os(Linux)
+        #if canImport(Musl)
+        Musl.sync()
+        #elseif canImport(Glibc)
         Glibc.sync()
-        #else
+        #elseif canImport(Darwin)
         Darwin.sync()
         #endif
 

@@ -6,3 +6,19 @@ DerivedData/
 .swiftpm/configuration/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
+
+# Build artifacts
+busybox-src/
+BusyBox/lib/
+BusyBox/include/busybox.h
+*.so
+*.so.*
+swiftybox-test
+
+# Development files
+.config/
+.deprecated/
+*.pem
+
+# Session files
+SESSION_*.md
