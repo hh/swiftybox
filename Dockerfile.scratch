@@ -1,0 +1,12 @@
+# SwiftyλBox - Minimal container with single binary
+FROM scratch
+
+# Copy the binary
+COPY .build/release/swiftybox /bin/swiftybox
+
+# Set as entrypoint
+ENTRYPOINT ["/bin/swiftybox"]
+
+# Metadata
+LABEL description="SwiftyλBox - Single binary, commands as lambdas"
+LABEL version="0.2.0"
