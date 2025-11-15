@@ -22,7 +22,7 @@ final class DdTests: XCTestCase {
     func testDdNotImplemented() {
         // dd command is not implemented yet
         // This test documents the expected behavior for future implementation
-        XCTExpectFailure("dd command not yet implemented")
+        // XCTExpectFailure("dd command not yet implemented")
 
         // When implemented, dd should handle:
         // - Basic file copying (if=/input of=/output)

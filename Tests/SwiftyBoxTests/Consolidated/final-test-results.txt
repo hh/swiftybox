@@ -1,0 +1,359 @@
+warning: 'swiftybox': found 4 file(s) which are unhandled; explicitly declare them as resources or exclude from the target
+    /var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/CONSOLIDATION_SUMMARY.md
+    /var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/TEST_FAILURE_TRACKER.md
+    /var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/README.md
+    /var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/final-test-results.txt
+[0/1] Planning build
+Building for debugging...
+[0/10] Write swift-version-24593BA9C3E375BF.txt
+[2/32] Compiling SwiftyBoxTests SumTests.swift
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/SumTests.swift:24:9: error: cannot find 'XCTExpectFailure' in scope
+22 |         // sum command is not implemented yet
+23 |         // Consider using cksum instead
+24 |         XCTExpectFailure("sum command not yet implemented - use cksum instead")
+   |         `- error: cannot find 'XCTExpectFailure' in scope
+25 | 
+26 |         // When/if implemented, sum should:
+[3/33] Compiling SwiftyBoxTests NprocTests.swift
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/OdTests.swift:23:9: error: cannot find 'XCTExpectFailure' in scope
+21 |         // od command is not implemented yet
+22 |         // This test documents the expected behavior for future implementation
+23 |         XCTExpectFailure("od command not yet implemented")
+   |         `- error: cannot find 'XCTExpectFailure' in scope
+24 | 
+25 |         // When implemented, od should handle basic octal dumps
+[4/33] Compiling SwiftyBoxTests OdTests.swift
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/OdTests.swift:23:9: error: cannot find 'XCTExpectFailure' in scope
+21 |         // od command is not implemented yet
+22 |         // This test documents the expected behavior for future implementation
+23 |         XCTExpectFailure("od command not yet implemented")
+   |         `- error: cannot find 'XCTExpectFailure' in scope
+24 | 
+25 |         // When implemented, od should handle basic octal dumps
+[5/33] Compiling SwiftyBoxTests FindTests.swift
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FindTests.swift:22:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+20 |     func testFindBasic() {
+21 |         // Create test file structure
+22 |         FileManager.default.createFile(atPath: "\(testDir!)/file1.txt", contents: nil)
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+23 |         FileManager.default.createFile(atPath: "\(testDir!)/file2.txt", contents: nil)
+24 | 
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FindTests.swift:23:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+21 |         // Create test file structure
+22 |         FileManager.default.createFile(atPath: "\(testDir!)/file1.txt", contents: nil)
+23 |         FileManager.default.createFile(atPath: "\(testDir!)/file2.txt", contents: nil)
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+24 | 
+25 |         let result = runCommand("find", [testDir!])
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FindTests.swift:32:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+30 | 
+31 |     func testFindByName() {
+32 |         FileManager.default.createFile(atPath: "\(testDir!)/target.txt", contents: nil)
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+33 |         FileManager.default.createFile(atPath: "\(testDir!)/other.txt", contents: nil)
+34 | 
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FindTests.swift:33:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+31 |     func testFindByName() {
+32 |         FileManager.default.createFile(atPath: "\(testDir!)/target.txt", contents: nil)
+33 |         FileManager.default.createFile(atPath: "\(testDir!)/other.txt", contents: nil)
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+34 | 
+35 |         let result = runCommand("find", [testDir!, "-name", "target.txt"])
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FindTests.swift:42:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+40 |     func testFindByType() {
+41 |         try? FileManager.default.createDirectory(atPath: "\(testDir!)/subdir", withIntermediateDirectories: true)
+42 |         FileManager.default.createFile(atPath: "\(testDir!)/file.txt", contents: nil)
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+43 | 
+44 |         let result = runCommand("find", [testDir!, "-type", "f"])
+[6/33] Compiling SwiftyBoxTests FoldTests.swift
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FindTests.swift:22:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+20 |     func testFindBasic() {
+21 |         // Create test file structure
+22 |         FileManager.default.createFile(atPath: "\(testDir!)/file1.txt", contents: nil)
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+23 |         FileManager.default.createFile(atPath: "\(testDir!)/file2.txt", contents: nil)
+24 | 
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FindTests.swift:23:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+21 |         // Create test file structure
+22 |         FileManager.default.createFile(atPath: "\(testDir!)/file1.txt", contents: nil)
+23 |         FileManager.default.createFile(atPath: "\(testDir!)/file2.txt", contents: nil)
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+24 | 
+25 |         let result = runCommand("find", [testDir!])
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FindTests.swift:32:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+30 | 
+31 |     func testFindByName() {
+32 |         FileManager.default.createFile(atPath: "\(testDir!)/target.txt", contents: nil)
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+33 |         FileManager.default.createFile(atPath: "\(testDir!)/other.txt", contents: nil)
+34 | 
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FindTests.swift:33:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+31 |     func testFindByName() {
+32 |         FileManager.default.createFile(atPath: "\(testDir!)/target.txt", contents: nil)
+33 |         FileManager.default.createFile(atPath: "\(testDir!)/other.txt", contents: nil)
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+34 | 
+35 |         let result = runCommand("find", [testDir!, "-name", "target.txt"])
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FindTests.swift:42:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+40 |     func testFindByType() {
+41 |         try? FileManager.default.createDirectory(atPath: "\(testDir!)/subdir", withIntermediateDirectories: true)
+42 |         FileManager.default.createFile(atPath: "\(testDir!)/file.txt", contents: nil)
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+43 | 
+44 |         let result = runCommand("find", [testDir!, "-type", "f"])
+[7/33] Compiling SwiftyBoxTests GrepTests.swift
+[8/33] Compiling SwiftyBoxTests GunzipTests.swift
+[9/33] Compiling SwiftyBoxTests StringsTests.swift
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/StringsTests.swift:29:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+27 |         data.append(contentsOf: "Testing123".utf8) // Another string
+28 |         data.append(contentsOf: [0x00, 0x00]) // Null bytes
+29 |         FileManager.default.createFile(atPath: testFile, contents: data)
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+30 | 
+31 |         let result = runCommand("strings", [testFile])
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/StringsTests.swift:41:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+39 |         let testFile = "\(testDir!)/test.dat"
+40 |         let data = Data("embedded string here".utf8)
+41 |         FileManager.default.createFile(atPath: testFile, contents: data)
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+42 | 
+43 |         let result = runCommand("strings", ["-a", testFile])
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/StringsTests.swift:52:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+50 |         // strings -f shows filename before each string
+51 |         let testFile = "\(testDir!)/named.txt"
+52 |         FileManager.default.createFile(atPath: testFile, contents: Data("test string".utf8))
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+53 | 
+54 |         let result = runCommand("strings", ["-f", testFile])
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/StringsTests.swift:63:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+61 |     func testStringsEmptyFile() {
+62 |         let testFile = "\(testDir!)/empty.dat"
+63 |         FileManager.default.createFile(atPath: testFile, contents: Data())
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+64 | 
+65 |         let result = runCommand("strings", [testFile])
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/StringsTests.swift:74:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+72 |         let testFile = "\(testDir!)/binary.dat"
+73 |         let data = Data([0x00, 0x01, 0xFF, 0xFE, 0x12, 0x34])
+74 |         FileManager.default.createFile(atPath: testFile, contents: data)
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+75 | 
+76 |         let result = runCommand("strings", [testFile])
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/StringsTests.swift:85:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+83 |         let testFile = "\(testDir!)/text.txt"
+84 |         let content = "This is a plain text file\nWith multiple lines\nAll readable\n"
+85 |         FileManager.default.createFile(atPath: testFile, contents: Data(content.utf8))
+   |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+86 | 
+87 |         let result = runCommand("strings", [testFile])
+[10/33] Compiling SwiftyBoxTests SyncTests.swift
+[11/33] Compiling SwiftyBoxTests PasteTests.swift
+[12/33] Compiling SwiftyBoxTests SleepTests.swift
+[13/33] Compiling SwiftyBoxTests PatchTests.swift
+[14/33] Compiling SwiftyBoxTests Sha1sumTests.swift
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/Sha1sumTests.swift:24:9: error: cannot find 'XCTExpectFailure' in scope
+22 |         // sha1sum is not implemented
+23 |         // Use sha256sum or sha512sum instead (both implemented)
+24 |         XCTExpectFailure("sha1sum not yet implemented - use sha256sum instead")
+   |         `- error: cannot find 'XCTExpectFailure' in scope
+25 | 
+26 |         // When/if implemented, sha1sum should:
+[15/33] Compiling SwiftyBoxTests SortTests.swift
+[16/33] Emitting module SwiftyBoxTests
+[17/33] Compiling SwiftyBoxTests DirnameTests.swift
+[18/33] Compiling SwiftyBoxTests DuTests.swift
+[19/33] Compiling SwiftyBoxTests CutTests.swift
+[20/33] Compiling SwiftyBoxTests DateTests.swift
+[21/33] Compiling SwiftyBoxTests DdTests.swift
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/DdTests.swift:25:9: error: cannot find 'XCTExpectFailure' in scope
+23 |         // dd command is not implemented yet
+24 |         // This test documents the expected behavior for future implementation
+25 |         XCTExpectFailure("dd command not yet implemented")
+   |         `- error: cannot find 'XCTExpectFailure' in scope
+26 | 
+27 |         // When implemented, dd should handle:
+[22/33] Compiling SwiftyBoxTests DiffTests.swift
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/DdTests.swift:25:9: error: cannot find 'XCTExpectFailure' in scope
+23 |         // dd command is not implemented yet
+24 |         // This test documents the expected behavior for future implementation
+25 |         XCTExpectFailure("dd command not yet implemented")
+   |         `- error: cannot find 'XCTExpectFailure' in scope
+26 | 
+27 |         // When implemented, dd should handle:
+[23/33] Compiling SwiftyBoxTests MvTests.swift
+[24/33] Compiling SwiftyBoxTests NlTests.swift
+[25/33] Compiling SwiftyBoxTests FreeTests.swift
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:200:21: error: cannot find 'XCTAssertGreater' in scope
+198 |                 if parts.count > 1, let total = Int64(parts[1]) {
+199 |                     // Memory is in KB, so total should be reasonable
+200 |                     XCTAssertGreater(total, 0, "Total memory should be positive")
+    |                     `- error: cannot find 'XCTAssertGreater' in scope
+201 |                     XCTAssertLess(total, maxReasonableMemory, "Total memory should be less than 1 PB")
+202 |                 }
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:201:21: error: cannot find 'XCTAssertLess' in scope
+199 |                     // Memory is in KB, so total should be reasonable
+200 |                     XCTAssertGreater(total, 0, "Total memory should be positive")
+201 |                     XCTAssertLess(total, maxReasonableMemory, "Total memory should be less than 1 PB")
+    |                     `- error: cannot find 'XCTAssertLess' in scope
+202 |                 }
+203 |             }
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:226:9: error: cannot find 'XCTAssertGreater' in scope
+224 | 
+225 |         // Should have multiple unit suffixes in output
+226 |         XCTAssertGreater(matches, 0, "Output with -h should contain human-readable sizes (e.g., '1.2G')")
+    |         `- error: cannot find 'XCTAssertGreater' in scope
+227 |     }
+228 | 
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:249:21: error: cannot find 'XCTAssertGreater' in scope
+247 |                 if parts.count > 1, let total = Int64(parts[1]) {
+248 |                     // In megabytes, typical system has at least 256MB
+249 |                     XCTAssertGreater(total, 256, "Total memory in MB should be > 256")
+    |                     `- error: cannot find 'XCTAssertGreater' in scope
+250 |                 }
+251 |             }
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:330:29: warning: immutable value 'error' was never used; consider replacing with '_' or removing it [#no-usage]
+328 |             print("⊘ /proc/meminfo not available on this system")
+329 |             // On systems without /proc/meminfo, free should fail gracefully
+330 |             let (status, _, error) = runFreeCommand()
+    |                             `- warning: immutable value 'error' was never used; consider replacing with '_' or removing it [#no-usage]
+331 |             XCTAssertNotEqual(status, 0, "free should fail when /proc/meminfo is unavailable")
+332 |         }
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:344:22: warning: immutable value 'output' was never used; consider replacing with '_' or removing it [#no-usage]
+342 |         // Note: Current implementation may not validate all invalid options
+343 |         // This test ensures behavior is predictable
+344 |         let (status, output, error) = runFreeCommand(["--invalid-option-xyz"])
+    |                      `- warning: immutable value 'output' was never used; consider replacing with '_' or removing it [#no-usage]
+345 | 
+346 |         // Either should fail or ignore unknown option
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:344:30: warning: immutable value 'error' was never used; consider replacing with '_' or removing it [#no-usage]
+342 |         // Note: Current implementation may not validate all invalid options
+343 |         // This test ensures behavior is predictable
+344 |         let (status, output, error) = runFreeCommand(["--invalid-option-xyz"])
+    |                              `- warning: immutable value 'error' was never used; consider replacing with '_' or removing it [#no-usage]
+345 | 
+346 |         // Either should fail or ignore unknown option
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:407:21: error: cannot find 'XCTAssertGreater' in scope
+405 | 
+406 |                     // Basic sanity checks
+407 |                     XCTAssertGreater(total, 0, "Total memory should be positive")
+    |                     `- error: cannot find 'XCTAssertGreater' in scope
+408 |                     XCTAssertGreaterThanOrEqual(used, 0, "Used memory should be non-negative")
+409 |                     XCTAssertGreaterThanOrEqual(free, 0, "Free memory should be non-negative")
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FsyncTests.swift:215:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+213 | 
+214 |         // Create file
+215 |         FileManager.default.createFile(atPath: tempFile.path, contents: nil)
+    |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+216 | 
+217 |         let result = runCommand("fsync", [tempFile.path])
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FsyncTests.swift:245:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+243 | 
+244 |         // Create empty file
+245 |         FileManager.default.createFile(atPath: tempFile.path, contents: Data())
+    |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+246 | 
+247 |         defer { try? FileManager.default.removeItem(at: tempFile) }
+[26/33] Compiling SwiftyBoxTests FsyncTests.swift
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:200:21: error: cannot find 'XCTAssertGreater' in scope
+198 |                 if parts.count > 1, let total = Int64(parts[1]) {
+199 |                     // Memory is in KB, so total should be reasonable
+200 |                     XCTAssertGreater(total, 0, "Total memory should be positive")
+    |                     `- error: cannot find 'XCTAssertGreater' in scope
+201 |                     XCTAssertLess(total, maxReasonableMemory, "Total memory should be less than 1 PB")
+202 |                 }
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:201:21: error: cannot find 'XCTAssertLess' in scope
+199 |                     // Memory is in KB, so total should be reasonable
+200 |                     XCTAssertGreater(total, 0, "Total memory should be positive")
+201 |                     XCTAssertLess(total, maxReasonableMemory, "Total memory should be less than 1 PB")
+    |                     `- error: cannot find 'XCTAssertLess' in scope
+202 |                 }
+203 |             }
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:226:9: error: cannot find 'XCTAssertGreater' in scope
+224 | 
+225 |         // Should have multiple unit suffixes in output
+226 |         XCTAssertGreater(matches, 0, "Output with -h should contain human-readable sizes (e.g., '1.2G')")
+    |         `- error: cannot find 'XCTAssertGreater' in scope
+227 |     }
+228 | 
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:249:21: error: cannot find 'XCTAssertGreater' in scope
+247 |                 if parts.count > 1, let total = Int64(parts[1]) {
+248 |                     // In megabytes, typical system has at least 256MB
+249 |                     XCTAssertGreater(total, 256, "Total memory in MB should be > 256")
+    |                     `- error: cannot find 'XCTAssertGreater' in scope
+250 |                 }
+251 |             }
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:330:29: warning: immutable value 'error' was never used; consider replacing with '_' or removing it [#no-usage]
+328 |             print("⊘ /proc/meminfo not available on this system")
+329 |             // On systems without /proc/meminfo, free should fail gracefully
+330 |             let (status, _, error) = runFreeCommand()
+    |                             `- warning: immutable value 'error' was never used; consider replacing with '_' or removing it [#no-usage]
+331 |             XCTAssertNotEqual(status, 0, "free should fail when /proc/meminfo is unavailable")
+332 |         }
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:344:22: warning: immutable value 'output' was never used; consider replacing with '_' or removing it [#no-usage]
+342 |         // Note: Current implementation may not validate all invalid options
+343 |         // This test ensures behavior is predictable
+344 |         let (status, output, error) = runFreeCommand(["--invalid-option-xyz"])
+    |                      `- warning: immutable value 'output' was never used; consider replacing with '_' or removing it [#no-usage]
+345 | 
+346 |         // Either should fail or ignore unknown option
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:344:30: warning: immutable value 'error' was never used; consider replacing with '_' or removing it [#no-usage]
+342 |         // Note: Current implementation may not validate all invalid options
+343 |         // This test ensures behavior is predictable
+344 |         let (status, output, error) = runFreeCommand(["--invalid-option-xyz"])
+    |                              `- warning: immutable value 'error' was never used; consider replacing with '_' or removing it [#no-usage]
+345 | 
+346 |         // Either should fail or ignore unknown option
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:407:21: error: cannot find 'XCTAssertGreater' in scope
+405 | 
+406 |                     // Basic sanity checks
+407 |                     XCTAssertGreater(total, 0, "Total memory should be positive")
+    |                     `- error: cannot find 'XCTAssertGreater' in scope
+408 |                     XCTAssertGreaterThanOrEqual(used, 0, "Used memory should be non-negative")
+409 |                     XCTAssertGreaterThanOrEqual(free, 0, "Free memory should be non-negative")
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FsyncTests.swift:215:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+213 | 
+214 |         // Create file
+215 |         FileManager.default.createFile(atPath: tempFile.path, contents: nil)
+    |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+216 | 
+217 |         let result = runCommand("fsync", [tempFile.path])
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FsyncTests.swift:245:29: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+243 | 
+244 |         // Create empty file
+245 |         FileManager.default.createFile(atPath: tempFile.path, contents: Data())
+    |                             `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused [#no-usage]
+246 | 
+247 |         defer { try? FileManager.default.removeItem(at: tempFile) }
+error: fatalError

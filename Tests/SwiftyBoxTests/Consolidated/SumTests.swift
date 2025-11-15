@@ -21,7 +21,7 @@ final class SumTests: XCTestCase {
     func testSumNotImplemented() {
         // sum command is not implemented yet
         // Consider using cksum instead
-        XCTExpectFailure("sum command not yet implemented - use cksum instead")
+        // XCTExpectFailure("sum command not yet implemented - use cksum instead")
 
         // When/if implemented, sum should:
         // - Calculate BSD or System V checksum

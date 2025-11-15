@@ -20,7 +20,7 @@ final class OdTests: XCTestCase {
     func testOdNotImplemented() {
         // od command is not implemented yet
         // This test documents the expected behavior for future implementation
-        XCTExpectFailure("od command not yet implemented")
+        // XCTExpectFailure("od command not yet implemented")
 
         // When implemented, od should handle basic octal dumps
         // For now, we just verify it's not available

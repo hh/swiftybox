@@ -13,11 +13,11 @@ let package = Package(
             name: "swiftybox",
             dependencies: ["BusyBox"],
             swiftSettings: [
-                .unsafeFlags(["-I", "../../busybox/include"])
+                .unsafeFlags(["-I", "../busybox/include"])
             ],
             linkerSettings: [
                 .unsafeFlags([
-                    "-L../../busybox",
+                    "-L../busybox",
                     "-lbusybox"
                 ])
             ]

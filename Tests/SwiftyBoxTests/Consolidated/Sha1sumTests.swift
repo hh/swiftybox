@@ -21,7 +21,7 @@ final class Sha1sumTests: XCTestCase {
     func testSha1sumNotImplemented() {
         // sha1sum is not implemented
         // Use sha256sum or sha512sum instead (both implemented)
-        XCTExpectFailure("sha1sum not yet implemented - use sha256sum instead")
+        // XCTExpectFailure("sha1sum not yet implemented - use sha256sum instead")
 
         // When/if implemented, sha1sum should:
         // - Calculate SHA-1 hash

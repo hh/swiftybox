@@ -197,8 +197,8 @@ final class FreeTests: XCTestCase {
                 let parts = line.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
                 if parts.count > 1, let total = Int64(parts[1]) {
                     // Memory is in KB, so total should be reasonable
-                    XCTAssertGreater(total, 0, "Total memory should be positive")
-                    XCTAssertLess(total, maxReasonableMemory, "Total memory should be less than 1 PB")
+                    XCTAssertGreaterThan(total, 0, "Total memory should be positive")
+                    XCTAssertLessThan(total, maxReasonableMemory, "Total memory should be less than 1 PB")
                 }
             }
         }
@@ -223,7 +223,7 @@ final class FreeTests: XCTestCase {
         let matches = regex?.numberOfMatches(in: output, range: range) ?? 0
 
         // Should have multiple unit suffixes in output
-        XCTAssertGreater(matches, 0, "Output with -h should contain human-readable sizes (e.g., '1.2G')")
+        XCTAssertGreaterThan(matches, 0, "Output with -h should contain human-readable sizes (e.g., '1.2G')")
     }
 
     // MARK: - Test 6: Option -m (Megabytes)
@@ -246,7 +246,7 @@ final class FreeTests: XCTestCase {
                 let parts = line.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
                 if parts.count > 1, let total = Int64(parts[1]) {
                     // In megabytes, typical system has at least 256MB
-                    XCTAssertGreater(total, 256, "Total memory in MB should be > 256")
+                    XCTAssertGreaterThan(total, 256, "Total memory in MB should be > 256")
                 }
             }
         }
@@ -404,7 +404,7 @@ final class FreeTests: XCTestCase {
                     }
 
                     // Basic sanity checks
-                    XCTAssertGreater(total, 0, "Total memory should be positive")
+                    XCTAssertGreaterThan(total, 0, "Total memory should be positive")
                     XCTAssertGreaterThanOrEqual(used, 0, "Used memory should be non-negative")
                     XCTAssertGreaterThanOrEqual(free, 0, "Free memory should be non-negative")
 

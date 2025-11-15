@@ -3,7 +3,7 @@
 
 import XCTest
 import Foundation
-@testable import SwiftyBox
+@testable import swiftybox
 
 /// Tests for the `fsync` command
 ///

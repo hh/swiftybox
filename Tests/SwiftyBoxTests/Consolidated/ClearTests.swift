@@ -2,7 +2,7 @@
 // Comprehensive tests for the clear command
 
 import XCTest
-@testable import SwiftyBox
+@testable import swiftybox
 
 /// Tests for the `clear` command
 ///

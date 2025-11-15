@@ -1,0 +1,61 @@
+warning: 'swiftybox': found 4 file(s) which are unhandled; explicitly declare them as resources or exclude from the target
+    /var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/README.md
+    /var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/TEST_FAILURE_TRACKER.md
+    /var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/CONSOLIDATION_SUMMARY.md
+    /var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/final-test-results.txt
+[0/1] Planning build
+Building for debugging...
+[0/11] Write sources
+[1/11] Write swift-version-24593BA9C3E375BF.txt
+[3/14] Compiling SwiftyBoxTests Sha1sumTests.swift
+[4/14] Compiling SwiftyBoxTests SumTests.swift
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/SumTests.swift:24:9: error: cannot find 'XCTExpectFailure' in scope
+22 |         // sum command is not implemented yet
+23 |         // Consider using cksum instead
+24 |         XCTExpectFailure("sum command not yet implemented - use cksum instead")
+   |         `- error: cannot find 'XCTExpectFailure' in scope
+25 | 
+26 |         // When/if implemented, sum should:
+[5/14] Compiling SwiftyBoxTests DdTests.swift
+[6/14] Emitting module SwiftyBoxTests
+[7/14] Compiling SwiftyBoxTests FreeTests.swift
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:201:21: error: cannot find 'XCTAssertLess' in scope
+199 |                     // Memory is in KB, so total should be reasonable
+200 |                     XCTAssertGreaterThan(total, 0, "Total memory should be positive")
+201 |                     XCTAssertLess(total, maxReasonableMemory, "Total memory should be less than 1 PB")
+    |                     `- error: cannot find 'XCTAssertLess' in scope
+202 |                 }
+203 |             }
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:214:30: warning: immutable value 'error' was never used; consider replacing with '_' or removing it [#no-usage]
+212 |         }
+213 | 
+214 |         let (status, output, error) = runFreeCommand(["-h"])
+    |                              `- warning: immutable value 'error' was never used; consider replacing with '_' or removing it [#no-usage]
+215 | 
+216 |         XCTAssertEqual(status, 0, "free -h should succeed")
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:330:29: warning: immutable value 'error' was never used; consider replacing with '_' or removing it [#no-usage]
+328 |             print("⊘ /proc/meminfo not available on this system")
+329 |             // On systems without /proc/meminfo, free should fail gracefully
+330 |             let (status, _, error) = runFreeCommand()
+    |                             `- warning: immutable value 'error' was never used; consider replacing with '_' or removing it [#no-usage]
+331 |             XCTAssertNotEqual(status, 0, "free should fail when /proc/meminfo is unavailable")
+332 |         }
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:344:22: warning: immutable value 'output' was never used; consider replacing with '_' or removing it [#no-usage]
+342 |         // Note: Current implementation may not validate all invalid options
+343 |         // This test ensures behavior is predictable
+344 |         let (status, output, error) = runFreeCommand(["--invalid-option-xyz"])
+    |                      `- warning: immutable value 'output' was never used; consider replacing with '_' or removing it [#no-usage]
+345 | 
+346 |         // Either should fail or ignore unknown option
+
+/var/home/hh/w/swift/swiftybox/Tests/SwiftyBoxTests/Consolidated/FreeTests.swift:344:30: warning: immutable value 'error' was never used; consider replacing with '_' or removing it [#no-usage]
+342 |         // Note: Current implementation may not validate all invalid options
+343 |         // This test ensures behavior is predictable
+344 |         let (status, output, error) = runFreeCommand(["--invalid-option-xyz"])
+    |                              `- warning: immutable value 'error' was never used; consider replacing with '_' or removing it [#no-usage]
+345 | 
+346 |         // Either should fail or ignore unknown option
+error: fatalError
