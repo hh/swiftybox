@@ -18,11 +18,20 @@ FROM ${BASE_IMAGE} AS builder
 
 WORKDIR /workspace
 
-# Copy source code
+# Copy source code (NOT BusyBox - already in base image at /usr/local)
 COPY Package.swift .
-COPY BusyBox ./BusyBox
 COPY Sources ./Sources
 COPY Tests ./Tests
+
+# Create BusyBox module pointing to base image headers
+RUN mkdir -p BusyBox && \
+    cat > BusyBox/module.modulemap << 'EOF'
+module BusyBox {
+    header "/usr/local/include/busybox.h"
+    link "busybox"
+    export *
+}
+EOF
 
 # Build SwiftyBox with musl static linking
 RUN swift build \
