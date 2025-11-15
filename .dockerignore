@@ -1,0 +1,29 @@
+# Build artifacts
+.build/
+busybox-src/
+*.so
+*.so.*
+swiftybox-test
+
+# BusyBox directory (will be built in container)
+BusyBox/lib/
+BusyBox/include/
+
+# Development files
+.config/
+.deprecated/
+*.pem
+
+# Git and IDE
+.git/
+.gitignore
+.github/
+.vscode/
+.devcontainer/
+
+# Documentation (not needed in container)
+*.md
+!README.md
+
+# Session files
+SESSION_*.md

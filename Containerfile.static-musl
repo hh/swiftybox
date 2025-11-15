@@ -71,8 +71,16 @@ RUN find . -name "*.a" -o -name "libbusybox*" | head -10 && \
 # Create staging area for Swift integration
 RUN mkdir -p /staging/lib /staging/include
 
-# With CONFIG_STATIC + CONFIG_BUILD_LIBBUSYBOX, create archive from object files
-RUN ar rcs /staging/lib/libbusybox.a $(find . -name "*.o" ! -name "applet.o")
+# Create libbusybox.a from object files, excluding files with main() to avoid duplicate symbols
+# The static build creates appletlib.o and conf.o which both have main() - exclude them
+RUN find . -name "*.o" \
+        ! -name "applet.o" \
+        ! -name "appletlib.o" \
+        ! -name "conf.o" \
+        ! -path "*/scripts/*" \
+        ! -path "*/applets/*" \
+        -type f \
+        -print0 | xargs -0 ar rcs /staging/lib/libbusybox.a
 
 # Copy headers
 RUN cp -r include /staging/
