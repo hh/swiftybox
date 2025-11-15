@@ -110,7 +110,7 @@ struct DfCommand {
 
             // Get filesystem type
             #if os(Linux)
-            let fsType = getFsTypeName(stats.f_type)
+            let fsType = getFsTypeName(UInt(stats.f_type))
             #else
             let fsType = String(cString: stats.f_fstypename)
             #endif
