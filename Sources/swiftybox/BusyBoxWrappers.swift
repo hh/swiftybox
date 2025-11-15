@@ -33,13 +33,13 @@ enum BusyBoxWrappers {
     static func echo(args: [String]) -> Int32 {
         let argv = toCArgv(args)
         defer { freeCArgv(argv, count: args.count) }
-        
+
         // Initialize BusyBox for echo
         lbb_prepare("echo", argv)
-        
+
         // Call BusyBox echo_main
         let result = echo_main(Int32(args.count), argv)
-        
+
         return result
     }
     
@@ -47,24 +47,24 @@ enum BusyBoxWrappers {
     static func pwd(args: [String]) -> Int32 {
         let argv = toCArgv(args)
         defer { freeCArgv(argv, count: args.count) }
-        
+
         lbb_prepare("pwd", argv)
         let result = pwd_main(Int32(args.count), argv)
-        
+
         return result
     }
-    
+
     /// Call BusyBox true implementation
     static func trueCommand(args: [String]) -> Int32 {
         let argv = toCArgv(args)
         defer { freeCArgv(argv, count: args.count) }
-        
+
         lbb_prepare("true", argv)
         let result = true_main(Int32(args.count), argv)
-        
+
         return result
     }
-    
+
     /// Call BusyBox false implementation
     static func falseCommand(args: [String]) -> Int32 {
         let argv = toCArgv(args)
