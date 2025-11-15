@@ -2,11 +2,11 @@
 #define BUSYBOX_BRIDGE_H
 
 // Must include autoconf.h first - it defines all the ENABLE_* macros
-#include "../../../busybox/include/autoconf.h"
+#include "../../../../busybox/include/autoconf.h"
 
 // Now we can include the main headers
-#include "../../../busybox/include/libbb.h"
-#include "../../../busybox/include/busybox.h"
+#include "../../../../busybox/include/libbb.h"
+#include "../../../../busybox/include/busybox.h"
 
 // Forward declare command main functions we want to use
 extern int echo_main(int argc, char **argv);
