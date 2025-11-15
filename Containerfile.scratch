@@ -1,0 +1,33 @@
+# SwiftyλBox Ultra-Minimal Container
+# Just the binary + symlinks - no base OS!
+# NOTE: Requires statically-linked Swift binary (Phase 6)
+
+FROM swift:latest AS builder
+
+WORKDIR /build
+
+# Copy source
+COPY swiftybox/ ./swiftybox/
+COPY busybox/libbusybox.a ./busybox/
+COPY busybox/include/ ./busybox/include/
+
+# Build SwiftyλBox
+WORKDIR /build/swiftybox
+RUN swift build -c release
+
+# Create symlink installation layer
+FROM ubuntu:24.04 AS installer
+COPY --from=builder /build/swiftybox/.build/release/swiftybox /tmp/swiftybox
+WORKDIR /rootfs/bin
+RUN /tmp/swiftybox --install && \
+    mv swiftybox /rootfs/bin/
+
+# Final scratch image (when static linking works)
+# FROM scratch
+# COPY --from=installer /rootfs/ /
+# CMD ["/bin/sh"]
+
+# For now, use minimal ubuntu
+FROM ubuntu:24.04
+COPY --from=installer /rootfs/bin/ /bin/
+CMD ["/bin/sh"]

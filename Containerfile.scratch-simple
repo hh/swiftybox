@@ -1,0 +1,38 @@
+# Containerfile.scratch-simple
+# SwiftyλBox - Minimal FROM scratch container
+#
+# Prerequisites: Build the binary locally first:
+#   cd swiftybox
+#   swift build -c release --static-swift-stdlib
+#   strip .build/release/swiftybox
+#
+# Build: podman build -f Containerfile.scratch-simple -t swiftybox:scratch .
+# Run:   podman run -it --rm swiftybox:scratch
+
+FROM scratch
+
+# Copy pre-built binary and symlinks
+# Note: Create symlinks in libs/bin/ before building:
+#   cd libs/bin && ln -sf swiftybox sh && ln -sf swiftybox grep ...
+COPY libs/bin/ /bin/
+
+# Copy required shared libraries from host
+# Note: These must be copied from the build environment
+COPY libs/lib/x86_64-linux-gnu/libm.so.6 /lib/x86_64-linux-gnu/
+COPY libs/lib/x86_64-linux-gnu/libstdc++.so.6 /lib/x86_64-linux-gnu/
+COPY libs/lib/x86_64-linux-gnu/libgcc_s.so.1 /lib/x86_64-linux-gnu/
+COPY libs/lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/
+COPY libs/lib64/ld-linux-x86-64.so.2 /lib64/
+
+# Set up environment
+ENV PATH=/bin
+ENV LD_LIBRARY_PATH=/lib/x86_64-linux-gnu
+
+# Default command: run shell via symlink
+# This way argv[0] is "sh" not "swiftybox"
+ENTRYPOINT ["/bin/sh"]
+
+# Metadata
+LABEL org.opencontainers.image.title="SwiftyλBox Scratch"
+LABEL org.opencontainers.image.description="Minimal SwiftyλBox FROM scratch"
+LABEL org.opencontainers.image.version="1.0.0-scratch"

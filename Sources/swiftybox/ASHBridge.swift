@@ -12,21 +12,25 @@ public func initializeASHBridge() {
     }
 }
 
-/// Check if Swift has a command implementation
+/// Check if Swift has a command implementation (legacy name)
 @_cdecl("swiftybox_has_command")
 public func swiftybox_has_command(_ name: UnsafePointer<CChar>) -> Int32 {
     let cmdName = String(cString: name)
-    
-    // Simple non-async check - registry should be initialized before any commands run
     let hasIt = CommandRegistry(preferredImpl: .swift).hasCommand(cmdName)
     return hasIt ? 1 : 0
 }
 
-/// Dispatch command to Swift implementation
+/// Check if Swift has a command implementation (ASH expects this name)
+@_cdecl("is_swiftybox_command")
+public func is_swiftybox_command(_ name: UnsafePointer<CChar>) -> Int32 {
+    return swiftybox_has_command(name)
+}
+
+/// Dispatch command to Swift implementation (legacy name)
 @_cdecl("swiftybox_dispatch")
 public func swiftybox_dispatch(_ argc: Int32, _ argv: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>) -> Int32 {
     let registry = CommandRegistry(preferredImpl: .swift)
-    
+
     // Convert C argv to Swift [String]
     var args: [String] = []
     for i in 0..<Int(argc) {
@@ -34,12 +38,18 @@ public func swiftybox_dispatch(_ argc: Int32, _ argv: UnsafeMutablePointer<Unsaf
             args.append(String(cString: arg))
         }
     }
-    
+
     guard let cmdName = args.first else {
         return 127
     }
-    
+
     return registry.execute(command: cmdName, args: args)
+}
+
+/// Wrapper for ASH built-in commands (ASH expects this name)
+@_cdecl("swiftybox_builtin_wrapper")
+public func swiftybox_builtin_wrapper(_ argc: Int32, _ argv: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>) -> Int32 {
+    return swiftybox_dispatch(argc, argv)
 }
 
 /// Get list of Swift commands for shell completion

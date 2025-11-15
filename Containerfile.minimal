@@ -1,0 +1,28 @@
+# SwiftyλBox Minimal Container
+# Single 164KB binary + symlinks = complete system!
+
+FROM swift:latest AS builder
+
+WORKDIR /build
+
+# Copy source
+COPY swiftybox/ ./swiftybox/
+COPY busybox/libbusybox.a ./busybox/
+COPY busybox/include/ ./busybox/include/
+
+# Build SwiftyλBox
+WORKDIR /build/swiftybox
+RUN swift build -c release
+
+# Final minimal image
+FROM ubuntu:24.04
+
+# Copy only the binary
+COPY --from=builder /build/swiftybox/.build/release/swiftybox /bin/swiftybox
+
+# Install all symlinks (85 commands!)
+WORKDIR /bin
+RUN /bin/swiftybox --install
+
+# Set default shell
+CMD ["/bin/sh"]

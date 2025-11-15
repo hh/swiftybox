@@ -1,0 +1,20 @@
+# Ignore build artifacts
+swiftybox/.build/
+swiftybox/.swiftpm/
+swiftybox/DerivedData/
+
+# Ignore git
+.git/
+swiftybox/.git/
+
+# Ignore test results and analysis
+*.txt
+*.md
+!swiftybox/*.md
+!CLAUDE.md
+
+# Ignore shell scripts and other artifacts
+*.sh
+*.py
+libs/
+libswiftybox.so

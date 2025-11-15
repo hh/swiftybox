@@ -1,0 +1,77 @@
+# Containerfile.scratch-static
+# SwiftyλBox - Minimal FROM scratch container with static Swift runtime
+#
+# This creates a truly minimal container (~60MB) containing only:
+# - swiftybox binary (with static Swift runtime)
+# - Essential system libraries (glibc, libm, libstdc++, libgcc_s)
+# - Dynamic linker
+#
+# Build: podman build -f Containerfile.scratch-static -t swiftybox:scratch .
+# Run:   podman run -it --rm swiftybox:scratch
+
+# Stage 1: Build with static Swift stdlib
+FROM docker.io/library/swift:latest AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y build-essential
+
+WORKDIR /build
+
+# Copy source files
+COPY busybox busybox
+COPY swiftybox swiftybox
+
+# Build BusyBox as static library
+WORKDIR /build/busybox
+RUN make clean && make -j$(nproc)
+
+# Build SwiftyλBox with static Swift runtime
+WORKDIR /build/swiftybox
+RUN swift build -c release --static-swift-stdlib
+
+# Strip debug symbols
+RUN strip .build/release/swiftybox
+
+# Stage 2: Collect dependencies
+FROM docker.io/library/ubuntu:24.04 AS deps
+
+# Copy the binary to check its dependencies
+COPY --from=builder /build/swiftybox/.build/release/swiftybox /tmp/swiftybox
+
+# Install ldd for dependency analysis
+RUN apt-get update && apt-get install -y binutils
+
+# Create directory structure for libraries
+RUN mkdir -p /staginglibs/lib/x86_64-linux-gnu \
+    /staging/lib64 \
+    /staging/bin
+
+# Copy all required shared libraries
+RUN cp /lib/x86_64-linux-gnu/libm.so.6 /staging/lib/x86_64-linux-gnu/ && \
+    cp /lib/x86_64-linux-gnu/libstdc++.so.6 /staging/lib/x86_64-linux-gnu/ && \
+    cp /lib/x86_64-linux-gnu/libgcc_s.so.1 /staging/lib/x86_64-linux-gnu/ && \
+    cp /lib/x86_64-linux-gnu/libc.so.6 /staging/lib/x86_64-linux-gnu/ && \
+    cp /lib64/ld-linux-x86-64.so.2 /staging/lib64/
+
+# Copy the binary
+RUN cp /tmp/swiftybox /staging/bin/swiftybox
+
+# Stage 3: FROM scratch minimal container
+FROM scratch
+
+# Copy everything from staging
+COPY --from=deps /staging /
+
+# Set up environment
+ENV PATH=/bin
+ENV LD_LIBRARY_PATH=/lib/x86_64-linux-gnu
+
+# Default command: run shell
+ENTRYPOINT ["/bin/swiftybox"]
+CMD ["sh"]
+
+# Metadata
+LABEL org.opencontainers.image.title="SwiftyλBox Static"
+LABEL org.opencontainers.image.description="Minimal SwiftyλBox with static Swift runtime"
+LABEL org.opencontainers.image.version="1.0.0-static"
+LABEL org.opencontainers.image.authors="SwiftyλBox Project"

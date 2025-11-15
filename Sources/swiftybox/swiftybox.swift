@@ -8,9 +8,15 @@ struct SwiftyBox {
         // Check if we should run as a shell (sh, ash, bash symlinks)
         if ShellMode.shouldRunAsShell() {
             print("SwiftyλBox Shell Mode (\(ShellMode.shellName()))")
-            print("Swift built-ins: echo, pwd, true, false (NOFORK)")
-            print("BusyBox built-ins: available via libbusybox")
-            print("External commands: fork+exec\n")
+            #if SWIFT_ASH_INTEGRATION
+            print("✓ Swift commands integrated as ASH built-ins (NOFORK)")
+            print("✓ BusyBox built-ins available")
+            print("✓ External commands via fork+exec\n")
+            #else
+            print("✓ Swift commands available via symlinks in /bin")
+            print("✓ BusyBox shell with standard built-ins")
+            print("✓ External commands via fork+exec\n")
+            #endif
 
             let exitCode = ShellMode.runASH(args: args)
             exit(exitCode)
