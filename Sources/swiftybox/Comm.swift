@@ -28,8 +28,22 @@ struct CommCommand {
             return 1
         }
 
-        guard let content1 = try? String(contentsOfFile: files[0], encoding: .utf8),
-              let content2 = try? String(contentsOfFile: files[1], encoding: .utf8) else {
+        // Read file or stdin
+        func readContent(_ filename: String) -> String? {
+            if filename == "-" {
+                // Read from stdin
+                var result = ""
+                while let line = readLine(strippingNewline: false) {
+                    result += line
+                }
+                return result
+            } else {
+                return try? String(contentsOfFile: filename, encoding: .utf8)
+            }
+        }
+
+        guard let content1 = readContent(files[0]),
+              let content2 = readContent(files[1]) else {
             FileHandle.standardError.write("comm: error reading files\n".data(using: .utf8)!)
             return 1
         }
