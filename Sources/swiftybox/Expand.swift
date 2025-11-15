@@ -26,9 +26,8 @@ struct ExpandCommand {
         for file in files {
             let content: String
             if file == "-" {
-                var input = ""
-                while let line = readLine() { input += line + "\n" }
-                content = input
+                let data = (try? FileHandle.standardInput.readToEnd()) ?? Data()
+                content = String(data: data, encoding: .utf8) ?? ""
             } else {
                 guard let data = try? String(contentsOfFile: file, encoding: .utf8) else {
                     FileHandle.standardError.write("expand: \(file): No such file or directory\n".data(using: .utf8)!)
@@ -37,11 +36,18 @@ struct ExpandCommand {
                 content = data
             }
 
-            for line in content.split(separator: "\n", omittingEmptySubsequences: false) {
+            // Process line by line
+            var lines = content.components(separatedBy: "\n")
+            // Remove trailing empty string if content ends with newline
+            if content.hasSuffix("\n") && lines.last?.isEmpty == true {
+                lines.removeLast()
+            }
+
+            for line in lines {
                 var col = 0
                 var result = ""
                 for char in line {
-                    if char == "\t" {
+                    if char == Character("\t") {
                         let spaces = tabstop - (col % tabstop)
                         result += String(repeating: " ", count: spaces)
                         col += spaces
