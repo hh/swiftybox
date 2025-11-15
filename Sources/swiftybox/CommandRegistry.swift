@@ -47,6 +47,7 @@ struct CommandRegistry {
             "head": HeadCommand.main,
             "tail": TailCommand.main,
             "grep": GrepCommand.main,
+            "egrep": GrepCommand.egrepMain,  // grep with -E (extended regex)
             "tr": TrCommand.main,
             "cut": CutCommand.main,
             "tee": TeeCommand.main,
@@ -121,6 +122,7 @@ struct CommandRegistry {
             "tac": TacCommand.main,
             "rev": RevCommand.main,
             "expand": ExpandCommand.main,
+            "unexpand": UnexpandCommand.main,
             "hexdump": HexdumpCommand.main,
             "shuf": ShufCommand.main,
             "stat": StatCommand.main,

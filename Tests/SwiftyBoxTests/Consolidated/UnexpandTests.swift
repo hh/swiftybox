@@ -37,8 +37,8 @@ final class UnexpandTests: XCTestCase {
         runner.testing(
             "unexpand case 1",
             command: "unexpand",
-            expectedOutput: "\\t12345678\\n",
-            stdin: "        12345678\\n"
+            expectedOutput: "\t12345678\n",
+            stdin: "        12345678\n"
         )
     }
 
@@ -46,8 +46,8 @@ final class UnexpandTests: XCTestCase {
         runner.testing(
             "unexpand case 2",
             command: "unexpand",
-            expectedOutput: "\\t 12345678\\n",
-            stdin: "         12345678\\n"
+            expectedOutput: "\t 12345678\n",
+            stdin: "         12345678\n"
         )
     }
 
@@ -55,8 +55,8 @@ final class UnexpandTests: XCTestCase {
         runner.testing(
             "unexpand case 3",
             command: "unexpand",
-            expectedOutput: "\\t  12345678\\n",
-            stdin: "          12345678\\n"
+            expectedOutput: "\t  12345678\n",
+            stdin: "          12345678\n"
         )
     }
 
@@ -64,8 +64,8 @@ final class UnexpandTests: XCTestCase {
         runner.testing(
             "unexpand case 4",
             command: "unexpand",
-            expectedOutput: "\\t12345678\\n",
-            stdin: "       \\t12345678\\n"
+            expectedOutput: "\t12345678\n",
+            stdin: "       \t12345678\n"
         )
     }
 
@@ -73,8 +73,8 @@ final class UnexpandTests: XCTestCase {
         runner.testing(
             "unexpand case 5",
             command: "unexpand",
-            expectedOutput: "\\t12345678\\n",
-            stdin: "      \\t12345678\\n"
+            expectedOutput: "\t12345678\n",
+            stdin: "      \t12345678\n"
         )
     }
 
@@ -82,8 +82,8 @@ final class UnexpandTests: XCTestCase {
         runner.testing(
             "unexpand case 6",
             command: "unexpand",
-            expectedOutput: "\\t12345678\\n",
-            stdin: "     \\t12345678\\n"
+            expectedOutput: "\t12345678\n",
+            stdin: "     \t12345678\n"
         )
     }
 
@@ -91,8 +91,8 @@ final class UnexpandTests: XCTestCase {
         runner.testing(
             "unexpand case 7",
             command: "unexpand",
-            expectedOutput: "123\\t 45678\\n",
-            stdin: "123 \\t 45678\\n"
+            expectedOutput: "123\t 45678\n",
+            stdin: "123 \t 45678\n"
         )
     }
 
@@ -100,8 +100,8 @@ final class UnexpandTests: XCTestCase {
         runner.testing(
             "unexpand case 8",
             command: "unexpand",
-            expectedOutput: "a b\\n",
-            stdin: "a b\\n"
+            expectedOutput: "a b\n",
+            stdin: "a b\n"
         )
     }
 
@@ -118,8 +118,8 @@ final class UnexpandTests: XCTestCase {
         runner.testing(
             "unexpand with unicode characher 0x394",
             command: "unexpand",
-            expectedOutput: "1ΔΔΔ5\\t99999\\n",
-            stdin: "1ΔΔΔ5   99999\\n"
+            expectedOutput: "1ΔΔΔ5\t99999\n",
+            stdin: "1ΔΔΔ5   99999\n"
         )
     }
 

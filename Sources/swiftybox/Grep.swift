@@ -4,12 +4,24 @@ import Foundation
 /// Usage: grep [-i] [-v] [-n] [-c] [-l] [-r] PATTERN [FILE...]
 /// Search for PATTERN in each FILE or standard input
 struct GrepCommand {
+    /// egrep wrapper - grep with -E enabled by default
+    static func egrepMain(_ args: [String]) -> Int32 {
+        // Inject -E flag if not present
+        var modifiedArgs = args
+        if !modifiedArgs.dropFirst().contains(where: { $0.contains("E") }) {
+            modifiedArgs.insert("-E", at: 1)
+        }
+        return main(modifiedArgs)
+    }
+
     static func main(_ args: [String]) -> Int32 {
         var ignoreCase = false
         var invertMatch = false
         var showLineNumbers = false
         var countOnly = false
         var filesWithMatches = false
+        var treatAsText = false  // -a flag
+        var useRegex = false  // -E flag
         // var recursive = false  // TODO: implement -r recursive flag
         var pattern: String?
         var files: [String] = []
@@ -28,6 +40,8 @@ struct GrepCommand {
                     case "n": showLineNumbers = true
                     case "c": countOnly = true
                     case "l": filesWithMatches = true
+                    case "a": treatAsText = true  // Treat binary as text
+                    case "E": useRegex = true  // Extended regex
                     case "r":
                         FileHandle.standardError.write("grep: -r recursive search not yet implemented\n".data(using: .utf8)!)
                         return 1
@@ -68,7 +82,9 @@ struct GrepCommand {
                 showLineNumbers: showLineNumbers,
                 countOnly: countOnly,
                 filesWithMatches: filesWithMatches,
-                showFilename: showFilenames
+                showFilename: showFilenames,
+                treatAsText: treatAsText,
+                useRegex: useRegex
             )
 
             if result.matched {
@@ -92,7 +108,9 @@ struct GrepCommand {
         showLineNumbers: Bool,
         countOnly: Bool,
         filesWithMatches: Bool,
-        showFilename: Bool
+        showFilename: Bool,
+        treatAsText: Bool,
+        useRegex: Bool
     ) -> (matched: Bool, error: Bool) {
         let content: String
 
@@ -114,7 +132,21 @@ struct GrepCommand {
         }
 
         // Prepare pattern for matching
-        let searchOptions: String.CompareOptions = ignoreCase ? [.caseInsensitive] : []
+        let regex: NSRegularExpression?
+        if useRegex {
+            do {
+                var options: NSRegularExpression.Options = []
+                if ignoreCase {
+                    options.insert(.caseInsensitive)
+                }
+                regex = try NSRegularExpression(pattern: pattern, options: options)
+            } catch {
+                FileHandle.standardError.write("grep: invalid regex pattern\n".data(using: .utf8)!)
+                return (false, true)
+            }
+        } else {
+            regex = nil
+        }
 
         // Split into lines
         let lines = content.components(separatedBy: "\n")
@@ -128,7 +160,17 @@ struct GrepCommand {
                 continue
             }
 
-            let matches = line.range(of: pattern, options: searchOptions) != nil
+            let matches: Bool
+            if let regex = regex {
+                // Regex matching
+                let range = NSRange(line.startIndex..., in: line)
+                matches = regex.firstMatch(in: line, options: [], range: range) != nil
+            } else {
+                // Literal string matching
+                let searchOptions: String.CompareOptions = ignoreCase ? [.caseInsensitive] : []
+                matches = line.range(of: pattern, options: searchOptions) != nil
+            }
+
             let shouldPrint = invertMatch ? !matches : matches
 
             if shouldPrint {
