@@ -1,0 +1,212 @@
+# SwiftyλBox Musl Static Development Container
+# This container has everything pre-built for fast Swift iteration with musl static linking
+
+FROM docker.io/library/swift:6.2.1
+
+# ==============================================================================
+# Proxy and Certificate Setup
+# ==============================================================================
+
+# Accept proxy build args
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+
+# Set proxy environment variables
+ENV HTTP_PROXY=${HTTP_PROXY} \
+    HTTPS_PROXY=${HTTPS_PROXY} \
+    NO_PROXY=${NO_PROXY}
+
+# Install CA certificate (if present)
+# This will be copied from host during build if it exists
+COPY .config/proxy-cas.pem /tmp/proxy-ca.crt
+RUN cp /tmp/proxy-ca.crt /usr/local/share/ca-certificates/proxy-ca.crt && \
+    update-ca-certificates && \
+    echo "✓ Proxy CA certificate installed"
+
+# ==============================================================================
+# Install Build Dependencies
+# ==============================================================================
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        curl \
+        git \
+        build-essential \
+        vim \
+        less \
+    && rm -rf /var/lib/apt/lists/*
+
+# ==============================================================================
+# Install Swift Static SDK for musl
+# ==============================================================================
+
+WORKDIR /tmp
+
+RUN echo "Downloading Swift static SDK for musl..." && \
+    curl -L -o swift-static-sdk.tar.gz \
+    https://download.swift.org/swift-6.2.1-release/static-sdk/swift-6.2.1-RELEASE/swift-6.2.1-RELEASE_static-linux-0.0.1.artifactbundle.tar.gz && \
+    echo "08e1939a504e499ec871b36826569173103e4562769e12b9b8c2a50f098374ad  swift-static-sdk.tar.gz" | sha256sum -c && \
+    mkdir -p /root/.swiftpm/swift-sdks && \
+    tar -xzf swift-static-sdk.tar.gz -C /root/.swiftpm/swift-sdks && \
+    rm swift-static-sdk.tar.gz && \
+    swift sdk list && \
+    echo "✓ Swift static SDK installed"
+
+# ==============================================================================
+# Build BusyBox with weak symbols (one-time, cached in image)
+# ==============================================================================
+
+WORKDIR /build
+
+# Clone BusyBox 1.36.1
+RUN git clone --depth 1 --branch 1_36_1 \
+    https://github.com/mirror/busybox.git busybox
+
+WORKDIR /build/busybox
+
+# Configure for static build with libbusybox + musl compatibility
+RUN make defconfig && \
+    sed -i 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/' .config && \
+    sed -i 's/# CONFIG_BUILD_LIBBUSYBOX is not set/CONFIG_BUILD_LIBBUSYBOX=y/' .config && \
+    sed -i 's/# CONFIG_FEATURE_SHARED_BUSYBOX is not set/CONFIG_FEATURE_SHARED_BUSYBOX=y/' .config && \
+    sed -i 's/^CONFIG_TC=y/# CONFIG_TC is not set/' .config && \
+    echo "✓ BusyBox configured"
+
+# Copy and apply ASH integration patch v3 (with weak symbols)
+COPY swiftybox-ash-integration-v3-weak.patch /tmp/
+RUN patch -p0 < /tmp/swiftybox-ash-integration-v3-weak.patch && \
+    echo "✓ ASH integration patch applied"
+
+# Build BusyBox
+RUN make -j$(nproc) CFLAGS="-Os -fvisibility=default" && \
+    echo "✓ BusyBox compiled"
+
+# Create static library
+RUN ar rcs libbusybox.a $(find . -name "*.o" | grep -v "applets/applets.o") && \
+    mkdir -p /usr/local/lib /usr/local/include && \
+    cp libbusybox.a /usr/local/lib/ && \
+    cp -r include/* /usr/local/include/ && \
+    echo "✓ BusyBox library created and installed"
+
+# Verify symbols
+RUN nm /usr/local/lib/libbusybox.a | grep -E "(swiftybox_builtin_wrapper|is_swiftybox_command)" && \
+    echo "✓ Weak symbols verified in BusyBox"
+
+# ==============================================================================
+# Create Helper Scripts
+# ==============================================================================
+
+# Swift build helper with musl
+RUN cat > /usr/local/bin/swift-build-musl << 'SCRIPT'
+#!/bin/bash
+# Quick Swift build with musl static linking
+
+set -e
+
+cd /workspace
+
+echo "=================================================="
+echo "Building SwiftyλBox with musl static linking..."
+echo "=================================================="
+
+swift build \
+    --swift-sdk x86_64-swift-linux-musl \
+    -c release \
+    -Xswiftc -Osize \
+    -Xswiftc -whole-module-optimization \
+    -Xlinker -L/usr/local/lib \
+    -Xlinker -lbusybox \
+    -Xlinker -static
+
+echo ""
+echo "✓ Build complete!"
+echo ""
+echo "Binary: .build/x86_64-swift-linux-musl/release/swiftybox"
+echo ""
+echo "Test it:"
+echo "  .build/x86_64-swift-linux-musl/release/swiftybox echo 'Hello!'"
+echo ""
+SCRIPT
+
+RUN chmod +x /usr/local/bin/swift-build-musl
+
+# Quick test helper
+RUN cat > /usr/local/bin/test-swiftybox << 'SCRIPT'
+#!/bin/bash
+# Test the built binary
+
+BIN=".build/x86_64-swift-linux-musl/release/swiftybox"
+
+if [ ! -f "$BIN" ]; then
+    echo "Binary not found! Run: swift-build-musl"
+    exit 1
+fi
+
+echo "Testing SwiftyλBox..."
+echo ""
+
+# Basic commands
+echo "1. echo test:"
+$BIN echo "Hello from SwiftyλBox!"
+
+echo ""
+echo "2. pwd test:"
+$BIN pwd
+
+echo ""
+echo "3. true/false test:"
+$BIN true && echo "  ✓ true returned 0"
+$BIN false || echo "  ✓ false returned non-zero"
+
+echo ""
+echo "4. Verify static linking:"
+ldd $BIN || echo "  ✓ Not a dynamic executable (static!)"
+
+echo ""
+echo "5. File info:"
+file $BIN
+
+echo ""
+echo "✓ All tests passed!"
+SCRIPT
+
+RUN chmod +x /usr/local/bin/test-swiftybox
+
+# ==============================================================================
+# Workspace Setup
+# ==============================================================================
+
+WORKDIR /workspace
+
+# Show welcome message
+RUN cat > /etc/profile.d/swiftybox-welcome.sh << 'EOF'
+cat << 'WELCOME'
+╔══════════════════════════════════════════════════════════════╗
+║  SwiftyλBox - Musl Static Development Container             ║
+╚══════════════════════════════════════════════════════════════╝
+
+✓ Swift 6.2.1 with musl static SDK
+✓ BusyBox library pre-built with weak symbols
+✓ Proxy and certificates configured
+
+Quick Commands:
+  swift-build-musl    Build SwiftyBox with static musl linking
+  test-swiftybox      Test the built binary
+
+Workflow:
+  1. Edit Swift files in /workspace
+  2. Run: swift-build-musl
+  3. Test: test-swiftybox
+  4. Repeat!
+
+Build time: ~10-30 seconds (vs 5-10 minutes for full rebuild)
+
+WELCOME
+EOF
+
+# Set bash as default shell
+ENV SHELL=/bin/bash
+
+# Run bash by default
+CMD ["/bin/bash", "-l"]

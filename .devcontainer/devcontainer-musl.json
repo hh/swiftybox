@@ -1,0 +1,60 @@
+{
+  "name": "SwiftyλBox Musl Static Development",
+
+  // Use a custom Containerfile for musl development
+  "build": {
+    "dockerfile": "Containerfile.musl-dev",
+    "context": ".."
+  },
+
+  // Container settings
+  "runArgs": [
+    "--name=swiftybox-musl-dev"
+  ],
+
+  // Environment variables
+  "containerEnv": {
+    // Proxy configuration
+    "HTTP_PROXY": "${localEnv:HTTP_PROXY:http://host.containers.internal:4128}",
+    "HTTPS_PROXY": "${localEnv:HTTPS_PROXY:http://host.containers.internal:4128}",
+    "http_proxy": "${localEnv:http_proxy:http://host.containers.internal:4128}",
+    "https_proxy": "${localEnv:https_proxy:http://host.containers.internal:4128}",
+    "NO_PROXY": "${localEnv:NO_PROXY:127.0.0.1,localhost,::1}",
+    "no_proxy": "${localEnv:no_proxy:127.0.0.1,localhost,::1}",
+
+    // SSL certificate
+    "SSL_CERT_FILE": "/usr/local/share/ca-certificates/proxy-ca.crt",
+    "GIT_SSL_CAINFO": "/usr/local/share/ca-certificates/proxy-ca.crt",
+    "CURL_CA_BUNDLE": "/usr/local/share/ca-certificates/proxy-ca.crt"
+  },
+
+  // Container user
+  "remoteUser": "root",
+
+  // Working directory
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+
+  // Lifecycle scripts
+  "postCreateCommand": "echo '✅ Musl dev container ready! Swift SDK and BusyBox are pre-built. Run: swift-build-musl'",
+
+  // VS Code customizations
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "sswg.swift-lang",
+        "vadimcn.vscode-lldb"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "swift.path": "/usr/bin/swift",
+        "files.watcherExclude": {
+          "**/.build/**": true
+        }
+      }
+    }
+  },
+
+  // Keep container running
+  "overrideCommand": false
+}

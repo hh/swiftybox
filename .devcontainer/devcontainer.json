@@ -1,0 +1,77 @@
+{
+  "name": "SwiftyλBox Development",
+
+  // Use main Containerfile with development target
+  "build": {
+    "dockerfile": "../Containerfile",
+    "context": "..",
+    "target": "development"
+  },
+
+  // Container settings
+  "runArgs": [
+    "--name=swiftybox-devcontainer"
+  ],
+
+  // Environment variables
+  "containerEnv": {
+    // Proxy configuration (will be overridden if set in host env)
+    "HTTP_PROXY": "${localEnv:HTTP_PROXY:http://host.containers.internal:4128}",
+    "HTTPS_PROXY": "${localEnv:HTTPS_PROXY:http://host.containers.internal:4128}",
+    "http_proxy": "${localEnv:http_proxy:http://host.containers.internal:4128}",
+    "https_proxy": "${localEnv:https_proxy:http://host.containers.internal:4128}",
+    "NO_PROXY": "${localEnv:NO_PROXY:127.0.0.1,localhost,::1}",
+    "no_proxy": "${localEnv:no_proxy:127.0.0.1,localhost,::1}",
+
+    // SSL certificate paths (if mounted)
+    "SSL_CERT_FILE": "/certs/proxy-cas.pem",
+    "GIT_SSL_CAINFO": "/certs/proxy-cas.pem",
+    "CURL_CA_BUNDLE": "/certs/proxy-cas.pem",
+    "NODE_EXTRA_CA_CERTS": "/certs/proxy-cas.pem"
+  },
+
+  // Mounts
+  "mounts": [
+    // Mount SSL certificates if they exist
+    "source=${localEnv:HOME}/.config/proxy-cas.pem,target=/certs/proxy-cas.pem,type=bind,readonly,consistency=cached"
+  ],
+
+  // Container user (use root to avoid permission issues with bind mounts)
+  "remoteUser": "root",
+
+  // Working directory
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+
+  // Lifecycle scripts
+  "postCreateCommand": "echo '✅ Dev container ready! Run: build-busybox (first time), then build-swift'",
+
+  // VS Code customizations
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "sswg.swift-lang",              // Swift language support
+        "vadimcn.vscode-lldb",          // LLDB debugger
+        "ms-vscode.cpptools"            // C/C++ tools for BusyBox
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "swift.path": "/usr/bin/swift",
+        "lldb.library": "/usr/lib/liblldb.so",
+        "files.watcherExclude": {
+          "**/.build/**": true,
+          "**/busybox-src/**": true
+        }
+      }
+    }
+  },
+
+  // Features to add (alternative to dockerfile for common tools)
+  "features": {},
+
+  // Port forwarding (if needed)
+  "forwardPorts": [],
+
+  // Keep container running
+  "overrideCommand": false
+}
