@@ -262,4 +262,147 @@ final class DuTests: XCTestCase {
         XCTAssertTrue(abs(systemLines - ourLines) <= variance,
                      "Line count should be similar: expected ~\(systemLines), got \(ourLines)")
     }
+
+    // MARK: - Enhanced Tests (Session 3)
+
+    func testDu_emptyDirectory() {
+        let testPath = testDir
+        try? FileManager.default.createDirectory(atPath: testPath, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(atPath: testPath) }
+
+        let result = runCommand("du", [testPath])
+        XCTAssertEqual(result.exitCode, 0, "du should succeed on empty directory")
+        XCTAssertFalse(result.stdout.isEmpty, "Should show directory size")
+    }
+
+    func testDu_singleFile() {
+        let testPath = testDir
+        try? FileManager.default.createDirectory(atPath: testPath, withIntermediateDirectories: true)
+        let filePath = testPath + "/singlefile.txt"
+        try? "test content\n".write(toFile: filePath, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(atPath: testPath) }
+
+        let result = runCommand("du", [filePath])
+        XCTAssertEqual(result.exitCode, 0, "du should work on single file")
+    }
+
+    func testDu_nestedDirectories() {
+        let testPath = testDir
+        try? FileManager.default.createDirectory(atPath: testPath, withIntermediateDirectories: true)
+        let subdir1 = testPath + "/sub1"
+        let subdir2 = testPath + "/sub2"
+        try? FileManager.default.createDirectory(atPath: subdir1, withIntermediateDirectories: false)
+        try? FileManager.default.createDirectory(atPath: subdir2, withIntermediateDirectories: false)
+
+        try? Data(repeating: 0, count: 1024).write(to: URL(fileURLWithPath: subdir1 + "/file1"))
+        try? Data(repeating: 0, count: 2048).write(to: URL(fileURLWithPath: subdir2 + "/file2"))
+
+        defer { try? FileManager.default.removeItem(atPath: testPath) }
+
+        let result = runCommand("du", [testPath])
+        XCTAssertEqual(result.exitCode, 0)
+
+        let lines = result.stdout.split(separator: "\n")
+        XCTAssertGreaterThan(lines.count, 1, "Should show subdirectories")
+    }
+
+    func testDu_maxDepth() {
+        let testPath = testDir
+        try? FileManager.default.createDirectory(atPath: testPath, withIntermediateDirectories: true)
+        let deep = testPath + "/a/b/c"
+        try? FileManager.default.createDirectory(atPath: deep, withIntermediateDirectories: true)
+        try? Data(repeating: 0, count: 1024).write(to: URL(fileURLWithPath: deep + "/file"))
+        defer { try? FileManager.default.removeItem(atPath: testPath) }
+
+        let result = runCommand("du", ["-d", "1", testPath])
+
+        if result.exitCode == 0 {
+            // -d option is supported
+            let lines = result.stdout.split(separator: "\n")
+            // Should limit depth
+            XCTAssertLessThan(lines.count, 10, "Should limit depth with -d 1")
+        }
+    }
+
+    func testDu_apparentSize() {
+        let testPath = testDir
+        try? FileManager.default.createDirectory(atPath: testPath, withIntermediateDirectories: true)
+        let filePath = testPath + "/file"
+        try? Data(repeating: 0, count: 100).write(to: URL(fileURLWithPath: filePath))
+        defer { try? FileManager.default.removeItem(atPath: testPath) }
+
+        let result = runCommand("du", ["--apparent-size", filePath])
+
+        if result.exitCode == 0 {
+            // --apparent-size is supported
+            XCTAssertFalse(result.stdout.isEmpty)
+        }
+    }
+
+    func testDu_excludePattern() {
+        let testPath = testDir
+        try? FileManager.default.createDirectory(atPath: testPath, withIntermediateDirectories: true)
+        try? Data(repeating: 0, count: 1024).write(to: URL(fileURLWithPath: testPath + "/keep.txt"))
+        try? Data(repeating: 0, count: 1024).write(to: URL(fileURLWithPath: testPath + "/exclude.log"))
+        defer { try? FileManager.default.removeItem(atPath: testPath) }
+
+        let result = runCommand("du", ["--exclude=*.log", testPath])
+
+        if result.exitCode == 0 {
+            // --exclude is supported
+            XCTAssertFalse(result.stdout.contains("exclude.log"), "Should exclude .log files")
+        }
+    }
+
+    func testDu_nonexistentPath() {
+        let result = runCommand("du", ["/tmp/nonexistent-\(UUID().uuidString)"])
+
+        XCTAssertNotEqual(result.exitCode, 0, "du should fail on nonexistent path")
+        XCTAssertTrue(result.stderr.contains("No such file") || result.stderr.contains("not found"))
+    }
+
+    func testDu_permissionDenied() {
+        // This test documents behavior when encountering permission denied
+        // Most systems will have some restricted directory
+        let result = runCommand("du", ["/root"])
+
+        if result.exitCode != 0 {
+            // Permission denied is expected for non-root users
+            XCTAssertTrue(result.stderr.contains("Permission denied") ||
+                         result.stderr.contains("cannot read"))
+        }
+    }
+
+    private func runCommand(_ command: String, _ args: [String]) -> CommandResult {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: swiftyboxPath)
+        task.arguments = [command] + args
+
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
+
+        task.standardOutput = stdoutPipe
+        task.standardError = stderrPipe
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+
+            let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+            let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+
+            let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
+            let stderr = String(data: stderrData, encoding: .utf8) ?? ""
+
+            return CommandResult(exitCode: task.terminationStatus, stdout: stdout, stderr: stderr)
+        } catch {
+            return CommandResult(exitCode: -1, stdout: "", stderr: "Failed to execute: \(error)")
+        }
+    }
+
+    struct CommandResult {
+        let exitCode: Int32
+        let stdout: String
+        let stderr: String
+    }
 }
