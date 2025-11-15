@@ -95,8 +95,9 @@ COPY swiftybox-ash-integration-v3-weak.patch /tmp/
 RUN patch -p0 < /tmp/swiftybox-ash-integration-v3-weak.patch && \
     echo "✓ ASH integration patch applied"
 
-# Build minimal BusyBox with musl (no glibc headers!)
-RUN make -j$(nproc) CC=musl-gcc CFLAGS="-Os -fvisibility=default -static" && \
+# Build minimal BusyBox with musl
+# Add /usr/include to find kernel headers (linux/*.h)
+RUN make -j$(nproc) CC=musl-gcc CFLAGS="-Os -fvisibility=default -static -I/usr/include" && \
     echo "✓ BusyBox minimal build compiled with musl"
 
 # Create static library and install
