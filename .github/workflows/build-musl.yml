@@ -52,6 +52,7 @@ jobs:
     name: Build Production Image
     runs-on: ubuntu-latest
     needs: build-base
+    if: false  # Disabled until base image builds successfully
     permissions:
       contents: read
       packages: write

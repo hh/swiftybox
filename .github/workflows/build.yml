@@ -16,6 +16,7 @@ jobs:
   build-container:
     name: Build Container Image
     runs-on: ubuntu-latest
+    if: false  # Disabled - focusing on musl build
     permissions:
       contents: read
       packages: write

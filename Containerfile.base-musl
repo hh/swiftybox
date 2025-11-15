@@ -96,11 +96,13 @@ RUN patch -p0 < /tmp/swiftybox-ash-integration-v3-weak.patch && \
     echo "✓ ASH integration patch applied"
 
 # Disable features requiring kernel headers (linux/*.h) that musl-gcc can't find
-RUN sed -i 's/^CONFIG_INIT=y/# CONFIG_INIT is not set/' .config && \
-    sed -i 's/^CONFIG_FEATURE_USE_INITTAB=y/# CONFIG_FEATURE_USE_INITTAB is not set/' .config && \
-    sed -i 's/^CONFIG_FEATURE_INITRD=y/# CONFIG_FEATURE_INITRD is not set/' .config && \
-    echo "# Disable init and capabilities (need linux/*.h)" >> .config && \
-    echo "✓ Disabled features requiring kernel headers"
+# Must use 'echo' to append since CONFIG_INIT might not exist after patch
+RUN echo "CONFIG_INIT=n" >> .config && \
+    echo "CONFIG_FEATURE_USE_INITTAB=n" >> .config && \
+    echo "CONFIG_FEATURE_INITRD=n" >> .config && \
+    echo "CONFIG_FEATURE_INIT_SWAPON=n" >> .config && \
+    make oldconfig < /dev/null && \
+    echo "✓ Disabled init features requiring kernel headers"
 
 # Build minimal BusyBox with musl
 RUN make -j$(nproc) CC=musl-gcc CFLAGS="-Os -fvisibility=default -static" && \
