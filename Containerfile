@@ -131,14 +131,17 @@ RUN git clone --depth 1 --branch 1_36_1 \
     # Verify symbols are exported
     echo "Verifying exported symbols..." && \
     nm -D 0_lib/libbusybox.so.1.36.1 | grep " T " | grep -E "(echo_main|pwd_main|ash_main|lbb_prepare)" && \
-    echo "✅ BusyBox library built with exported symbols"
+    echo "✅ BusyBox library built with exported symbols" && \
+    # Ensure autoconf.h is present for Swift module compilation
+    echo "Verifying autoconf.h:" && \
+    ls -la include/autoconf.h
 
 # ============================================
 # Stage: Build SwiftyλBox
 # ============================================
 FROM build-base AS swift-builder
 
-# Copy BusyBox shared library and headers
+# Copy BusyBox shared library and all headers (include/autoconf.h is auto-generated during make)
 COPY --from=busybox-builder /workspace/busybox-*/0_lib/libbusybox.so.1.36.1 /usr/lib/
 COPY --from=busybox-builder /workspace/busybox-*/include/ /tmp/busybox-include/
 
@@ -147,11 +150,14 @@ COPY . /workspace/
 
 # Set up BusyBox module for Swift
 RUN cd /workspace/BusyBox && \
-    mkdir -p lib && \
+    mkdir -p lib include && \
     cp /usr/lib/libbusybox.so.1.36.1 lib/ && \
     cd lib && ln -sf libbusybox.so.1.36.1 libbusybox.so && \
     cd /workspace/BusyBox && \
-    cp -r /tmp/busybox-include include/
+    cp -r /tmp/busybox-include/* include/ && \
+    ls -la include/ && \
+    echo "Checking for autoconf.h:" && \
+    find include -name "autoconf.h" || echo "WARNING: autoconf.h not found!"
 
 # Build SwiftyλBox in release mode with dynamic linking
 RUN --mount=type=cache,target=/workspace/.build \

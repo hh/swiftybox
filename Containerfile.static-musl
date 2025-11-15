@@ -71,11 +71,11 @@ RUN find . -name "*.a" -o -name "libbusybox*" | head -10 && \
 # Create staging area for Swift integration
 RUN mkdir -p /staging/lib /staging/include
 
-# Create libbusybox.a from object files, excluding files with main() to avoid duplicate symbols
-# The static build creates appletlib.o and conf.o which both have main() - exclude them
+# Create libbusybox.a from ALL object files
+# The ASH integration patch makes main() __attribute__((weak))
+# so Swift's main() will override BusyBox's weak main() - no symbol conflict!
+# Only exclude: conf.o (kconfig tool), scripts/, and applets/ (standalone binaries)
 RUN find . -name "*.o" \
-        ! -name "applet.o" \
-        ! -name "appletlib.o" \
         ! -name "conf.o" \
         ! -path "*/scripts/*" \
         ! -path "*/applets/*" \
