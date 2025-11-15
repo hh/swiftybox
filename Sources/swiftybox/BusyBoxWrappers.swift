@@ -1,5 +1,5 @@
 import Foundation
-import BusyBox
+// import BusyBox  // Disabled - not needed for pure Swift implementation
 
 /// Wrapper for calling BusyBox C implementations
 /// These properly initialize BusyBox globals before calling *_main() functions
@@ -31,49 +31,27 @@ enum BusyBoxWrappers {
     
     /// Call BusyBox echo implementation
     static func echo(args: [String]) -> Int32 {
-        let argv = toCArgv(args)
-        defer { freeCArgv(argv, count: args.count) }
-
-        // Initialize BusyBox for echo
-        lbb_prepare("echo", argv)
-
-        // Call BusyBox echo_main
-        let result = echo_main(Int32(args.count), argv)
-
-        return result
+        // Disabled - BusyBox integration not currently used
+        // Using pure Swift implementation instead
+        return 1  // Not implemented
     }
     
     /// Call BusyBox pwd implementation
     static func pwd(args: [String]) -> Int32 {
-        let argv = toCArgv(args)
-        defer { freeCArgv(argv, count: args.count) }
-
-        lbb_prepare("pwd", argv)
-        let result = pwd_main(Int32(args.count), argv)
-
-        return result
+        // Disabled - BusyBox integration not currently used
+        return 1  // Not implemented
     }
 
     /// Call BusyBox true implementation
     static func trueCommand(args: [String]) -> Int32 {
-        let argv = toCArgv(args)
-        defer { freeCArgv(argv, count: args.count) }
-
-        lbb_prepare("true", argv)
-        let result = true_main(Int32(args.count), argv)
-
-        return result
+        // Disabled - BusyBox integration not currently used
+        return 0  // true always returns 0
     }
 
     /// Call BusyBox false implementation
     static func falseCommand(args: [String]) -> Int32 {
-        let argv = toCArgv(args)
-        defer { freeCArgv(argv, count: args.count) }
-
-        lbb_prepare("false", argv)
-        let result = false_main(Int32(args.count), argv)
-
-        return result
+        // Disabled - BusyBox integration not currently used
+        return 1  // false always returns 1
     }
 
     /// Generic dispatcher for any BusyBox NOFORK/NOEXEC applet

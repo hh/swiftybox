@@ -37,7 +37,8 @@ final class GrepTests: XCTestCase {
         runner.testing(
             "grep (default to stdin)",
             command: "grep two",
-            expectedOutput: "two\\n"
+            expectedOutput: "two\n",
+            stdin: "one\ntwo\nthree\n"
         )
     }
 
@@ -45,7 +46,8 @@ final class GrepTests: XCTestCase {
         runner.testing(
             "grep - (specify stdin)",
             command: "grep two -",
-            expectedOutput: "two\\n"
+            expectedOutput: "two\n",
+            stdin: "one\ntwo\nthree\n"
         )
     }
 
@@ -53,7 +55,8 @@ final class GrepTests: XCTestCase {
         runner.testing(
             "grep input (specify file)",
             command: "grep two input",
-            expectedOutput: "two\\n"
+            expectedOutput: "two\n",
+            inputFile: "one\ntwo\nthree\n"
         )
     }
 
@@ -61,7 +64,7 @@ final class GrepTests: XCTestCase {
         runner.testing(
             "grep (no newline at EOL)",
             command: "grep bug input",
-            expectedOutput: "bug\\n",
+            expectedOutput: "bug\n",
             inputFile: "bug"
         )
     }
@@ -70,8 +73,8 @@ final class GrepTests: XCTestCase {
         runner.testing(
             "grep handles NUL in files",
             command: "grep -a foo input",
-            expectedOutput: "\\0foo\\n",
-            inputFile: "\\0foo\\n\\n"
+            expectedOutput: "\0foo\n",
+            inputFile: "\0foo\n\n"
         )
     }
 
@@ -79,8 +82,8 @@ final class GrepTests: XCTestCase {
         runner.testing(
             "grep handles NUL on stdin",
             command: "grep -a foo",
-            expectedOutput: "\\0foo\\n",
-            stdin: "\\0foo\\n\\n"
+            expectedOutput: "\0foo\n",
+            stdin: "\0foo\n\n"
         )
     }
 
@@ -88,7 +91,8 @@ final class GrepTests: XCTestCase {
         runner.testing(
             "grep -E supports extended regexps",
             command: "grep -E fo+",
-            expectedOutput: "foo\\n"
+            expectedOutput: "foo\n",
+            stdin: "foo\nbar\n"
         )
     }
 
@@ -96,8 +100,8 @@ final class GrepTests: XCTestCase {
         runner.testing(
             "grep is also egrep",
             command: "egrep foo",
-            expectedOutput: "foo\\n",
-            stdin: "foo\\nbar\\n"
+            expectedOutput: "foo\n",
+            stdin: "foo\nbar\n"
         )
     }
 

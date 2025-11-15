@@ -4,23 +4,25 @@ import PackageDescription
 let package = Package(
     name: "swiftybox",
     targets: [
-        .systemLibrary(
-            name: "BusyBox",
-            path: "BusyBox"
-        ),
+        // BusyBox integration disabled - using pure Swift implementation
+        // .systemLibrary(
+        //     name: "BusyBox",
+        //     path: "BusyBox"
+        // ),
 
         .executableTarget(
             name: "swiftybox",
-            dependencies: ["BusyBox"],
-            swiftSettings: [
-                .unsafeFlags(["-I", "../busybox/include"])
-            ],
-            linkerSettings: [
-                .unsafeFlags([
-                    "-L../busybox",
-                    "-lbusybox"
-                ])
-            ]
+            dependencies: []
+            // BusyBox integration disabled
+            // swiftSettings: [
+            //     .unsafeFlags(["-I", "../busybox/include"])
+            // ],
+            // linkerSettings: [
+            //     .unsafeFlags([
+            //         "-L../busybox",
+            //         "-lbusybox"
+            //     ])
+            // ]
         ),
 
         .testTarget(

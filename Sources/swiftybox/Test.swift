@@ -74,6 +74,16 @@ struct TestCommand {
             let op = expression[1]
             let right = expression[2]
 
+            // Check if middle argument is a logical operator (AND/OR)
+            if op == "-a" {
+                // Logical AND
+                return try evaluate(expression: [left]) && evaluate(expression: [right])
+            }
+            if op == "-o" {
+                // Logical OR
+                return try evaluate(expression: [left]) || evaluate(expression: [right])
+            }
+
             // Check if middle argument is a binary operator
             switch op {
             // String comparisons

@@ -47,6 +47,7 @@ struct CommandRegistry {
             "head": HeadCommand.main,
             "tail": TailCommand.main,
             "grep": GrepCommand.main,
+            "egrep": GrepCommand.egrepMain,  // grep with -E (extended regex)
             "tr": TrCommand.main,
             "cut": CutCommand.main,
             "tee": TeeCommand.main,
