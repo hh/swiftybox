@@ -75,7 +75,8 @@ ARG BUSYBOX_VERSION=1.36.1
 COPY swiftybox-ash-integration-v2.patch /tmp/
 
 # Clone BusyBox from GitHub mirror (much faster than wget)
-RUN git clone --depth 1 --branch ${BUSYBOX_VERSION} \
+# Note: GitHub mirror uses underscores in tags (1_36_1 not 1.36.1)
+RUN git clone --depth 1 --branch 1_36_1 \
         https://github.com/mirror/busybox.git busybox-${BUSYBOX_VERSION} && \
     cd busybox-${BUSYBOX_VERSION} && \
     # Note: ASH integration patch temporarily disabled due to patch format issues
