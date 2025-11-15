@@ -83,9 +83,10 @@ RUN --mount=type=cache,target=/var/cache/busybox \
     cp /var/cache/busybox/busybox-${BUSYBOX_VERSION}.tar.bz2 . && \
     tar xjf busybox-${BUSYBOX_VERSION}.tar.bz2 && \
     cd busybox-${BUSYBOX_VERSION} && \
-    # Apply SwiftyλBox ASH integration patch (enables Swift commands in shell scripts)
-    patch -p1 < /tmp/swiftybox-ash-integration-v2.patch && \
-    echo "✅ SwiftyλBox ASH integration patch applied" && \
+    # Note: ASH integration patch temporarily disabled due to patch format issues
+    # Will be re-enabled once patch is regenerated from correct BusyBox version
+    # patch -p1 < /tmp/swiftybox-ash-integration-v2.patch && \
+    # echo "✅ SwiftyλBox ASH integration patch applied" && \
     # Configure for shared library build with individual applets
     make defconfig && \
     sed -i 's/# CONFIG_BUILD_LIBBUSYBOX is not set/CONFIG_BUILD_LIBBUSYBOX=y/' .config && \
