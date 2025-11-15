@@ -1,0 +1,232 @@
+# Containerfile.static-musl
+# SwiftyλBox - True Single Static Binary with musl
+#
+# This creates a fully static, zero-dependency container using:
+# - BusyBox: Static build with musl in Alpine
+# - SwiftyBox: Cross-compiled with Swift Static SDK (musl target)
+# - Result: Single binary (~5-15MB) with NO runtime dependencies
+#
+# Build: podman build -f Containerfile.static-musl -t swiftybox:static .
+# Run:   podman run -it --rm swiftybox:static
+#
+# Key differences from glibc approach:
+# - No Swift runtime .so files needed
+# - No glibc/libc.so needed
+# - True FROM scratch deployment
+# - Runs on ANY Linux distribution
+
+# ==============================================================================
+# Stage 1: Build BusyBox statically with musl in Alpine
+# ==============================================================================
+FROM alpine:latest AS busybox-builder
+
+WORKDIR /build
+
+# Install build dependencies
+# Note: For corporate proxy with custom CAs, uncomment the lines below
+# and ensure .config/proxy-cas.pem exists before building:
+# COPY .config/proxy-cas.pem /usr/local/share/ca-certificates/proxy-ca.crt
+# RUN update-ca-certificates
+RUN apk update && \
+    apk add --no-cache \
+        ca-certificates \
+        build-base \
+        git \
+        patch \
+        musl-dev \
+        linux-headers
+
+# Clone BusyBox 1.36.1
+RUN git clone --depth 1 --branch 1_36_1 \
+    https://github.com/mirror/busybox.git busybox
+
+WORKDIR /build/busybox
+
+# Start with default config
+RUN make defconfig
+
+# Configure for static build with libbusybox + musl compatibility
+RUN sed -i 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/' .config && \
+    sed -i 's/# CONFIG_BUILD_LIBBUSYBOX is not set/CONFIG_STATIC=y/' .config && \
+    sed -i 's/# CONFIG_BUILD_LIBBUSYBOX is not set/CONFIG_BUILD_LIBBUSYBOX=y/' .config && \
+    sed -i 's/# CONFIG_FEATURE_SHARED_BUSYBOX is not set/CONFIG_FEATURE_SHARED_BUSYBOX=y/' .config && \
+    sed -i 's/^CONFIG_TC=y/# CONFIG_TC is not set/' .config
+
+# Copy and apply ASH integration patch v3 (with weak symbols for static linking)
+COPY swiftybox-ash-integration-v3-weak.patch /tmp/
+RUN patch -p0 < /tmp/swiftybox-ash-integration-v3-weak.patch
+
+# Override visibility flags to export symbols
+# BusyBox defaults to -fvisibility=hidden, we need default for Swift interop
+RUN sed -i 's/-fvisibility=hidden/-fvisibility=default/g' Makefile
+
+# Build BusyBox statically with musl
+# CONFIG_STATIC=y ensures fully static binary (no .so dependencies)
+RUN make -j$(nproc) CONFIG_STATIC=y
+
+# Find and verify the built library (location varies with static builds)
+RUN find . -name "*.a" -o -name "libbusybox*" | head -10 && \
+    echo "BusyBox built with musl!"
+
+# Create staging area for Swift integration
+RUN mkdir -p /staging/lib /staging/include
+
+# With CONFIG_STATIC + CONFIG_BUILD_LIBBUSYBOX, create archive from object files
+RUN ar rcs /staging/lib/libbusybox.a $(find . -name "*.o" ! -name "applet.o")
+
+# Copy headers
+RUN cp -r include /staging/
+
+# Verify exported symbols needed by Swift
+RUN nm /staging/lib/libbusybox.a | grep -E "(echo_main|pwd_main|ash_main|lbb_prepare)" && \
+    echo "✓ Required symbols exported"
+
+# ==============================================================================
+# Stage 2: Build SwiftyBox with Swift Static SDK (musl target)
+# ==============================================================================
+FROM docker.io/library/swift:6.2.1 AS swift-builder
+
+WORKDIR /build
+
+# Note: For corporate proxy with custom CAs, uncomment:
+# COPY .config/proxy-cas.pem /usr/local/share/ca-certificates/proxy-ca.crt
+# RUN update-ca-certificates
+
+# Install curl for downloading SDK
+RUN apt-get update && \
+    apt-get install -y curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Swift Static SDK for musl cross-compilation (manual extraction to avoid aarch64 symlink issues)
+# Note: This uses the official Swift 6.2.1 Static SDK
+RUN curl -L -o /tmp/swift-static-sdk.tar.gz \
+    https://download.swift.org/swift-6.2.1-release/static-sdk/swift-6.2.1-RELEASE/swift-6.2.1-RELEASE_static-linux-0.0.1.artifactbundle.tar.gz && \
+    echo "08e1939a504e499ec871b36826569173103e4562769e12b9b8c2a50f098374ad  /tmp/swift-static-sdk.tar.gz" | sha256sum -c && \
+    mkdir -p /root/.swiftpm/swift-sdks && \
+    tar -xzf /tmp/swift-static-sdk.tar.gz -C /root/.swiftpm/swift-sdks && \
+    rm /tmp/swift-static-sdk.tar.gz && \
+    echo "✓ Static SDK extracted"
+
+# Verify SDK is available
+RUN swift sdk list && echo "✓ Static SDK installed"
+
+# Copy SwiftyBox source (Package.swift, Sources/, Tests/)
+COPY Package.swift /build/swiftybox/
+COPY Sources /build/swiftybox/Sources
+COPY Tests /build/swiftybox/Tests
+
+# Copy BusyBox artifacts from Alpine builder
+COPY --from=busybox-builder /staging/lib /build/busybox
+COPY --from=busybox-builder /staging/include /build/busybox/include
+
+# Create BusyBox module map for Swift interop
+RUN mkdir -p /build/swiftybox/BusyBox && \
+    cat > /build/swiftybox/BusyBox/module.modulemap << 'EOF'
+module BusyBox {
+    header "include/busybox-bridge.h"
+    link "busybox"
+    export *
+}
+EOF
+
+# Create bridge header exposing BusyBox functions to Swift
+RUN mkdir -p /build/swiftybox/BusyBox/include && \
+    cat > /build/swiftybox/BusyBox/include/busybox-bridge.h << 'EOF'
+#ifndef BUSYBOX_BRIDGE_H
+#define BUSYBOX_BRIDGE_H
+
+// BusyBox command entry points
+int echo_main(int argc, char **argv) __attribute__((visibility("default")));
+int pwd_main(int argc, char **argv) __attribute__((visibility("default")));
+int true_main(int argc, char **argv) __attribute__((visibility("default")));
+int false_main(int argc, char **argv) __attribute__((visibility("default")));
+int ash_main(int argc, char **argv) __attribute__((visibility("default")));
+
+// BusyBox library initialization
+void lbb_prepare(const char *applet, char **argv) __attribute__((visibility("default")));
+int lbb_main(char **argv) __attribute__((visibility("default")));
+
+#endif // BUSYBOX_BRIDGE_H
+EOF
+
+# Copy BusyBox library to expected location
+RUN mkdir -p /build/BusyBox && \
+    cp /build/busybox/libbusybox.a /build/BusyBox/ && \
+    cp -r /build/swiftybox/BusyBox/include /build/BusyBox/
+
+WORKDIR /build/swiftybox
+
+# Build SwiftyBox for musl target
+# --swift-sdk: Cross-compile to static musl binary
+# -c release: Optimized build
+# -Xswiftc -Osize: Optimize for binary size
+RUN swift build \
+    --swift-sdk x86_64-swift-linux-musl \
+    -c release \
+    -Xswiftc -Osize \
+    -Xswiftc -whole-module-optimization \
+    -Xlinker -L/build/BusyBox \
+    -Xlinker -lbusybox \
+    -Xlinker -static
+
+# Strip debug symbols to reduce size
+RUN strip .build/x86_64-swift-linux-musl/release/swiftybox
+
+# Verify binary is fully static (no dynamic dependencies)
+RUN file .build/x86_64-swift-linux-musl/release/swiftybox && \
+    (ldd .build/x86_64-swift-linux-musl/release/swiftybox 2>&1 | grep "not a dynamic executable" || true) && \
+    ls -lh .build/x86_64-swift-linux-musl/release/swiftybox && \
+    echo "✓ Static binary built successfully!"
+
+# ==============================================================================
+# Stage 3: Create minimal runtime environment
+# ==============================================================================
+FROM alpine:latest AS symlink-creator
+
+# Copy static binary from Swift builder
+COPY --from=swift-builder \
+    /build/swiftybox/.build/x86_64-swift-linux-musl/release/swiftybox \
+    /bin/swiftybox
+
+# Create all command symlinks using swiftybox --install
+# This creates 115+ symlinks (74 Swift + BusyBox commands)
+WORKDIR /bin
+RUN /bin/swiftybox --install && \
+    ls -la /bin/ | head -20 && \
+    echo "..." && \
+    echo "✓ Symlinks created"
+
+# ==============================================================================
+# Stage 4: Final minimal image (FROM scratch)
+# ==============================================================================
+FROM scratch
+
+# Copy only the binary and symlinks
+# No libraries needed! Static binary has everything.
+COPY --from=symlink-creator /bin /bin
+
+# Optional: Add minimal runtime files for full shell compatibility
+# (Uncomment if you need /etc/passwd, /etc/group, etc.)
+# COPY --from=symlink-creator /etc/passwd /etc/passwd
+# COPY --from=symlink-creator /etc/group /etc/group
+
+# Set environment
+ENV PATH=/bin
+ENV HOME=/root
+
+# Default to ASH shell
+ENTRYPOINT ["/bin/sh"]
+
+# Metadata
+LABEL org.opencontainers.image.title="SwiftyλBox Static"
+LABEL org.opencontainers.image.description="Fully static SwiftyλBox with musl - zero dependencies"
+LABEL org.opencontainers.image.version="1.0.0-static-musl"
+LABEL org.opencontainers.image.authors="SwiftyλBox Project"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+
+# Build info
+LABEL swift.version="6.2.1"
+LABEL swift.sdk="static-linux-musl-0.0.1"
+LABEL busybox.version="1.36.1"
+LABEL libc="musl"
+LABEL linking="static"

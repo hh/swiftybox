@@ -1,0 +1,31 @@
+--- shell/ash.c.orig	2025-11-15 08:20:44.842532052 -0600
++++ shell/ash.c	2025-11-15 08:20:56.319224954 -0600
+@@ -188,6 +188,19 @@
+ #include <fnmatch.h>
+ #include <sys/times.h>
+ #include <sys/utsname.h> /* for setting $HOSTNAME */
++
++/* SwiftyλBox integration with weak symbols for static linking */
++__attribute__((weak))
++int swiftybox_builtin_wrapper(int argc, char **argv) {
++	return 127; /* Command not found - will be overridden by Swift */
++}
++
++__attribute__((weak))
++int is_swiftybox_command(const char *name) {
++	return 0; /* Not a swiftybox command - will be overridden by Swift */
++}
++/* End SwiftyλBox */
++
+ #include "busybox.h" /* for applet_names */
+ #if ENABLE_FEATURE_SH_EMBEDDED_SCRIPTS
+ # include "embedded_scripts.h"
+@@ -10640,6 +10653,8 @@ evalbltin(const struct builtincmd *cmd,
+ 	optptr = NULL;                  /* initialize nextopt */
+ 	if (cmd == EVALCMD)
+ 		status = evalcmd(argc, argv, flags);
++	else if (is_swiftybox_command(argv[0]))
++		status = swiftybox_builtin_wrapper(argc, argv);
+ 	else
+ 		status = (*cmd->builtin)(argc, argv);
+ 	flush_stdout_stderr();
