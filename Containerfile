@@ -74,14 +74,9 @@ ARG BUSYBOX_VERSION=1.36.1
 # Copy SwiftyλBox ASH integration patch
 COPY swiftybox-ash-integration-v2.patch /tmp/
 
-# Download and extract BusyBox (cached)
-RUN --mount=type=cache,target=/var/cache/busybox \
-    if [ ! -f /var/cache/busybox/busybox-${BUSYBOX_VERSION}.tar.bz2 ]; then \
-        wget -O /var/cache/busybox/busybox-${BUSYBOX_VERSION}.tar.bz2 \
-        https://busybox.net/downloads/busybox-${BUSYBOX_VERSION}.tar.bz2; \
-    fi && \
-    cp /var/cache/busybox/busybox-${BUSYBOX_VERSION}.tar.bz2 . && \
-    tar xjf busybox-${BUSYBOX_VERSION}.tar.bz2 && \
+# Clone BusyBox from GitHub mirror (much faster than wget)
+RUN git clone --depth 1 --branch ${BUSYBOX_VERSION} \
+        https://github.com/mirror/busybox.git busybox-${BUSYBOX_VERSION} && \
     cd busybox-${BUSYBOX_VERSION} && \
     # Note: ASH integration patch temporarily disabled due to patch format issues
     # Will be re-enabled once patch is regenerated from correct BusyBox version
