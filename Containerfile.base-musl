@@ -1,0 +1,142 @@
+# ==============================================================================
+# SwiftyλBox Base Image for Musl Static Builds
+# ==============================================================================
+# This image contains:
+# - Swift 6.2.1 toolchain
+# - Swift Static Linux SDK (x86_64-swift-linux-musl)
+# - BusyBox 1.36.1 with ASH integration v3 (weak symbols)
+# - libbusybox.a ready for static linking
+#
+# Build once, use everywhere (local dev, CI/CD)
+# ==============================================================================
+
+FROM docker.io/library/swift:6.2.1
+
+LABEL org.opencontainers.image.title="SwiftyλBox Base (musl)"
+LABEL org.opencontainers.image.description="Swift 6.2.1 with musl static SDK and BusyBox for SwiftyλBox builds"
+LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.source="https://github.com/hh/swiftybox"
+
+# ==============================================================================
+# Install Build Dependencies
+# ==============================================================================
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        curl \
+        git \
+        build-essential \
+        patch \
+        musl-tools \
+        musl-dev \
+        linux-libc-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# ==============================================================================
+# Install Swift Static SDK for musl
+# ==============================================================================
+
+WORKDIR /tmp
+
+RUN echo "Downloading Swift static SDK for musl..." && \
+    curl -L --retry 5 --retry-delay 3 --retry-max-time 600 \
+        -o swift-static-sdk.tar.gz \
+        https://download.swift.org/swift-6.2.1-release/static-sdk/swift-6.2.1-RELEASE/swift-6.2.1-RELEASE_static-linux-0.0.1.artifactbundle.tar.gz && \
+    echo "08e1939a504e499ec871b36826569173103e4562769e12b9b8c2a50f098374ad  swift-static-sdk.tar.gz" | sha256sum -c && \
+    mkdir -p /root/.swiftpm/swift-sdks && \
+    tar -xzf swift-static-sdk.tar.gz -C /root/.swiftpm/swift-sdks && \
+    rm swift-static-sdk.tar.gz && \
+    swift sdk list && \
+    echo "✓ Swift static SDK installed"
+
+# ==============================================================================
+# Build BusyBox with ASH Integration v3 (Weak Symbols)
+# ==============================================================================
+
+WORKDIR /build
+
+# Clone BusyBox 1.36.1
+RUN git clone --depth 1 --branch 1_36_1 \
+    https://github.com/mirror/busybox.git busybox
+
+WORKDIR /build/busybox
+
+# Configure BusyBox for musl - Start with defconfig, disable console-tools only
+# This gives us full ASH with all features, just avoiding musl header conflicts
+RUN make defconfig && \
+    sed -i 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/' .config && \
+    sed -i 's/# CONFIG_BUILD_LIBBUSYBOX is not set/CONFIG_BUILD_LIBBUSYBOX=y/' .config && \
+    sed -i 's/# CONFIG_FEATURE_SHARED_BUSYBOX is not set/CONFIG_FEATURE_SHARED_BUSYBOX=y/' .config && \
+    sed -i 's/^CONFIG_TC=y/# CONFIG_TC is not set/' .config && \
+    echo "# Disable console-tools (require kernel headers incompatible with musl)" >> .config && \
+    sed -i 's/^CONFIG_CLEAR=y/# CONFIG_CLEAR is not set/' .config && \
+    sed -i 's/^CONFIG_DEALLOCVT=y/# CONFIG_DEALLOCVT is not set/' .config && \
+    sed -i 's/^CONFIG_DUMPKMAP=y/# CONFIG_DUMPKMAP is not set/' .config && \
+    sed -i 's/^CONFIG_FGCONSOLE=y/# CONFIG_FGCONSOLE is not set/' .config && \
+    sed -i 's/^CONFIG_KBD_MODE=y/# CONFIG_KBD_MODE is not set/' .config && \
+    sed -i 's/^CONFIG_LOADFONT=y/# CONFIG_LOADFONT is not set/' .config && \
+    sed -i 's/^CONFIG_LOADKMAP=y/# CONFIG_LOADKMAP is not set/' .config && \
+    sed -i 's/^CONFIG_OPENVT=y/# CONFIG_OPENVT is not set/' .config && \
+    sed -i 's/^CONFIG_RESET=y/# CONFIG_RESET is not set/' .config && \
+    sed -i 's/^CONFIG_RESIZE=y/# CONFIG_RESIZE is not set/' .config && \
+    sed -i 's/^CONFIG_SETCONSOLE=y/# CONFIG_SETCONSOLE is not set/' .config && \
+    sed -i 's/^CONFIG_SETFONT=y/# CONFIG_SETFONT is not set/' .config && \
+    sed -i 's/^CONFIG_SETKEYCODES=y/# CONFIG_SETKEYCODES is not set/' .config && \
+    sed -i 's/^CONFIG_SETLOGCONS=y/# CONFIG_SETLOGCONS is not set/' .config && \
+    sed -i 's/^CONFIG_SHOWKEY=y/# CONFIG_SHOWKEY is not set/' .config && \
+    echo "# Disable ASH builtins - let Swift handle these commands for NOFORK speedup" >> .config && \
+    sed -i 's/^CONFIG_ASH_BUILTIN_ECHO=y/# CONFIG_ASH_BUILTIN_ECHO is not set/' .config && \
+    sed -i 's/^CONFIG_ASH_BUILTIN_PRINTF=y/# CONFIG_ASH_BUILTIN_PRINTF is not set/' .config && \
+    sed -i 's/^CONFIG_ASH_BUILTIN_TEST=y/# CONFIG_ASH_BUILTIN_TEST is not set/' .config && \
+    echo "✓ BusyBox defconfig: Full ASH with arithmetic, console-tools disabled, builtins→Swift"
+
+# Copy and apply ASH integration patch v3 (with weak symbols)
+COPY swiftybox-ash-integration-v3-weak.patch /tmp/
+RUN patch -p0 < /tmp/swiftybox-ash-integration-v3-weak.patch && \
+    echo "✓ ASH integration patch applied"
+
+# Build minimal BusyBox with musl (no glibc headers!)
+RUN make -j$(nproc) CC=musl-gcc CFLAGS="-Os -fvisibility=default -static" && \
+    echo "✓ BusyBox minimal build compiled with musl"
+
+# Create static library and install
+RUN ar rcs libbusybox.a $(find . -name "*.o" | grep -v "applets/applets.o") && \
+    mkdir -p /usr/local/lib /usr/local/include && \
+    cp libbusybox.a /usr/local/lib/ && \
+    cp -r include/* /usr/local/include/ && \
+    echo "✓ BusyBox library installed to /usr/local/lib/libbusybox.a"
+
+# Verify symbols
+RUN nm /usr/local/lib/libbusybox.a | grep -E "(swiftybox_builtin_wrapper|is_swiftybox_command)" && \
+    echo "✓ Weak symbols verified"
+
+# Clean up build artifacts (keep git for Swift Package Manager!)
+RUN rm -rf /build/busybox && \
+    apt-get purge -y patch && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
+# ==============================================================================
+# Setup for Swift Builds
+# ==============================================================================
+
+WORKDIR /workspace
+
+# Show what's installed
+RUN echo "======================================" && \
+    echo "SwiftyλBox Base Image Ready!" && \
+    echo "======================================" && \
+    swift --version && \
+    echo "" && \
+    swift sdk list && \
+    echo "" && \
+    echo "BusyBox library: /usr/local/lib/libbusybox.a" && \
+    ls -lh /usr/local/lib/libbusybox.a && \
+    echo "======================================" && \
+    echo "" && \
+    echo "To build SwiftyλBox:" && \
+    echo "  swift build --swift-sdk x86_64-swift-linux-musl -c release \\" && \
+    echo "    -Xlinker -L/usr/local/lib -Xlinker -lbusybox -Xlinker -static" && \
+    echo ""
+
+CMD ["/bin/bash"]

@@ -1,0 +1,75 @@
+# ==============================================================================
+# SwiftyλBox Production Build (using pre-built base image)
+# ==============================================================================
+# This Containerfile assumes you've already built and pushed the base image:
+#   podman build -f Containerfile.base-musl -t ghcr.io/hh/swiftybox-base:musl .
+#   podman push ghcr.io/hh/swiftybox-base:musl
+#
+# For local builds, you can also use:
+#   podman build -f Containerfile.base-musl -t swiftybox-base:musl .
+# ==============================================================================
+
+# ==============================================================================
+# Stage 1: Build Swift Application
+# ==============================================================================
+# Use local base image for development, or GHCR for CI/CD
+# Uncomment the appropriate line:
+FROM swiftybox-base:musl-v3 AS builder
+# FROM ghcr.io/hh/swiftybox-base:musl AS builder
+
+WORKDIR /workspace
+
+# Copy source code
+COPY Package.swift .
+COPY BusyBox ./BusyBox
+COPY Sources ./Sources
+COPY Tests ./Tests
+
+# Build SwiftyBox with musl static linking
+RUN swift build \
+    --swift-sdk x86_64-swift-linux-musl \
+    -c release \
+    -Xswiftc -Osize \
+    -Xswiftc -whole-module-optimization \
+    -Xlinker -L/usr/local/lib \
+    -Xlinker -lbusybox \
+    -Xlinker -static && \
+    echo "✓ SwiftyBox built successfully"
+
+# Verify the binary is static
+RUN ldd .build/x86_64-swift-linux-musl/release/swiftybox || \
+    echo "✓ Binary is statically linked (no dynamic dependencies)"
+
+# ==============================================================================
+# Stage 2: Create Symlinks
+# ==============================================================================
+FROM builder AS installer
+
+WORKDIR /install
+
+# Install swiftybox and create all symlinks
+RUN mkdir -p bin && \
+    cp /workspace/.build/x86_64-swift-linux-musl/release/swiftybox bin/ && \
+    cd bin && \
+    ./swiftybox --install . && \
+    echo "✓ Created $(ls -1 | wc -l) symlinks"
+
+# ==============================================================================
+# Stage 3: Minimal Runtime Image (FROM scratch)
+# ==============================================================================
+FROM scratch AS production
+
+# Copy only the binary and symlinks
+COPY --from=installer /install/bin /bin
+
+# Set the entrypoint
+ENTRYPOINT ["/bin/sh"]
+
+# Default command
+CMD ["-c", "echo 'SwiftyλBox ready! Try: ls, pwd, echo, etc.'"]
+
+# Metadata
+LABEL org.opencontainers.image.title="SwiftyλBox"
+LABEL org.opencontainers.image.description="BusyBox-like utilities written in Swift with zero dependencies"
+LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.source="https://github.com/hh/swiftybox"
